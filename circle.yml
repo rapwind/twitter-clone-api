@@ -16,7 +16,7 @@ test:
   pre:
     - go vet ./...
     - golint ./... | xargs -r false
-    - goimports -l ./ | xargs -r false
+    - goimports -l ./
   override:
     - cd "${GOPATH%%:*}/src/$IMPORT_PATH/" && go get
     - godep go test ./...
