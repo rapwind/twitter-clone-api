@@ -6,10 +6,10 @@ import (
 
 	"github.com/dogenzaka/gin-tools/logging"
 	"github.com/gin-gonic/gin"
-	"github.com/techcampman/twitter-d-server/logger"
-	cors "github.com/tommy351/gin-cors"
 	"github.com/techcampman/twitter-d-server/env"
 	"github.com/techcampman/twitter-d-server/env/on"
+	"github.com/techcampman/twitter-d-server/logger"
+	cors "github.com/tommy351/gin-cors"
 )
 
 func init() {
