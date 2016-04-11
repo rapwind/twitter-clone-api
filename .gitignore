@@ -1,7 +1,7 @@
 ## godep - dependency tool for go
 
 Godeps/Readme
-Godeps/_workspace
+vendor/
 
 ## Go.gitignore
 
