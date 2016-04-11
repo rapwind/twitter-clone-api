@@ -1,0 +1,22 @@
+machine:
+  timezone: Asia/Tokyo
+  environment:
+    IMPORT_PATH: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
+  python:
+    version: 2.7.6
+dependencies:
+  pre:
+    - go get github.com/tools/godep
+    - go get -u github.com/golang/lint/golint
+    - go get golang.org/x/tools/cmd/goimports
+  override:
+    - mkdir -p "${GOPATH%%:*}/src/$IMPORT_PATH"
+    - rsync -azC --delete ./ "${GOPATH%%:*}/src/$IMPORT_PATH/"
+test:
+  pre:
+    - go vet ./...
+    - golint ./...
+    - goimports -l ./
+  override:
+    - cd "${GOPATH%%:*}/src/$IMPORT_PATH/" && go get
+    - godep go test ./...
