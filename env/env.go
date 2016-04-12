@@ -57,14 +57,11 @@ func init() {
 }
 
 func getEnv(s string) Environment {
-	//switch s {
-	//case on.ReleaseEnv:
-	//	logger.Info("RELEASE ENVIROMENT MODE: ✔")
-	//	return new(on.Release)
-	//case on.DevelopEnv:
-	//	logger.Info("DEVELOP ENVIROMENT MODE: ✔")
-	//	return new(on.Develop)
-	//}
+	switch s {
+	case on.ReleaseEnv:
+		logger.Info("RELEASE ENVIROMENT MODE: ✔")
+		return new(on.Release)
+	}
 	logger.Info("LOCAL ENVIROMENT MODE: ✔")
 	return new(on.Local)
 }
