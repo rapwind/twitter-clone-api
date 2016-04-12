@@ -10,62 +10,51 @@
 use strict;
 use warnings;
 
-load('users.csv', 'users.tsv',
-    'user',
-    '_id,screenName,name,profileImageUrl,profileBackgroundImageUrl,biography,locationText,Url,Birthday,createdAt,updatedAt',
+load('users.csv',
     sub {
       my($uid, $screenName, $name) = @_;
       $uid = sprintf("%024x", $uid);
-      my $ProfileImageURL = "";
-    my $ProfileBackgroundImageURL = "";
-      my $Biography = "";
-      my $LocationText = "";
-      my $URL = "";
-      my $Birthday = "";
       my $CreatedAt = "2016-03-20T00:00:00+09:00";
       my $UpdatedAt = "2016-03-20T00:00:00+09:00";
-      return "ObjectId($uid)\t$screenName\t$name\t$ProfileImageURL\t$ProfileBackgroundImageURL\t$Biography\t$LocationText\t$URL\t$Birthday\t$CreatedAt\t$UpdatedAt\n";
+      return
+        "db.user.insert({_id: ObjectId(\"$uid\"), " .
+        "screenName: \"$screenName\", " .
+        "name: \"$name\", " .
+        "createdAt: \"$CreatedAt\", " .
+        "updatedAt: \"$UpdatedAt\"})";
     });
 
-load('follows.csv', 'follows.tsv',
-    'follow',
-    'userId,targetId',
+load('follows.csv',
     sub {
       my($userId, $targetId) = @_;
-      return sprintf("ObjectId(%024x)\tObjectId(%024x)\n", $userId, $targetId);
+      return sprintf("db.follow.insert({userId: ObjectId(\"%024x\"), targetId: ObjectId(\"%024x\")})", $userId, $targetId);
     });
 
-load('tweets.csv', 'tweets.tsv',
-    'tweet',
-    'userId,text,createdAt', # inReplyToUserId,inReplyToTweetId,
+load('tweets.csv',
     sub {
       my($n, $uid, $text) = @_;
       my $createdAt = "2016-03-20T00:00:00+09:00";
-      return sprintf("ObjectId(%024x)\t%s\t%s\n", $uid, $text, $createdAt);
+      return sprintf("db.tweet.insert({userId:ObjectId(\"%024x\"), text:\"%s\", createdAt:\"%s\"})", $uid, $text, $createdAt);
     });
 
 sub load {
-    my($infile, $outfile, $coll, $fields, $f) = @_;
+    my($infile, $f) = @_;
 
     $| = 1;
     print "Loading $infile... ";
 
     open(my $ifh, '<', $infile);
-    open(my $ofh, '>', $outfile);
+    open(my $ofh, '| mongo 1>/dev/null');
 
-    my $n = 0;
+    print {$ofh} "use poppo\n";
+
     while(defined(my $line = <$ifh>)) {
         chomp $line;
-        print {$ofh} &$f(split(/,/, $line));
-        ++$n;
-        if ($n % 100000 == 0) { print "[$n]"; }
+        my $opr = &$f(split(/,/, $line));
+        print "$opr\n";
+        print {$ofh} "$opr\n";
     }
-
-    print "\n";
 
     close($ifh);
     close($ofh);
-
-    system("mongoimport --db poppo --collection $coll --type tsv --file $outfile -f $fields");
-    unlink($outfile);
 }
