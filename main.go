@@ -9,6 +9,7 @@ import (
 	"github.com/techcampman/twitter-d-server/env"
 	"github.com/techcampman/twitter-d-server/env/on"
 	"github.com/techcampman/twitter-d-server/logger"
+	"github.com/techcampman/twitter-d-server/v1"
 	cors "github.com/tommy351/gin-cors"
 )
 
@@ -42,7 +43,7 @@ func main() {
 		r.Use(gin.Logger())
 	}
 
-	//v1.AddV1Endpoints(r)
+	v1.AddV1Endpoints(r)
 
 	// Listen and server
 	logger.Info("START POPPO API SERVER: ✔")
