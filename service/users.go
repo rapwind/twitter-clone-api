@@ -6,8 +6,8 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-// GetUser gets "entity.User" data
-func GetUser(id bson.ObjectId) (u *entity.User, err error) {
+// ReadUserByID gets "entity.User" data
+func ReadUserByID(id bson.ObjectId) (u *entity.User, err error) {
 	users, err := collection.Users()
 	if err != nil {
 		return
@@ -19,25 +19,8 @@ func GetUser(id bson.ObjectId) (u *entity.User, err error) {
 	return
 }
 
-// GetTweetsInfo gets entity.UserDetail.TweetsCount and LikesCount
-func GetTweetsInfo(id bson.ObjectId) (tweetsCount int, likesCount int, err error) {
-	tweets, err := collection.Tweets()
-	if err != nil {
-		return
-	}
-	defer tweets.Close()
-
-	tweetsCount, err = tweets.Find(bson.M{"userId": id}).Count()
-	if err != nil {
-		return
-	}
-
-	likesCount = 0 // TODO: obtain likesCount!
-	return
-}
-
-// GetFollowsInfo gets entity.UserDetail.FollowingCount and FollowerCount
-func GetFollowsInfo(id bson.ObjectId) (followingCount int, followerCount int, err error) {
+// ReadFollowsCountsByID gets entity.UserDetail.FollowingCount and FollowerCount
+func ReadFollowsCountsByID(id bson.ObjectId) (followingCount int, followerCount int, err error) {
 	follows, err := collection.Follows()
 	if err != nil {
 		return

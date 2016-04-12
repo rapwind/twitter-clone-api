@@ -14,19 +14,19 @@ import (
 func getUser(c *gin.Context) {
 	id := utils.GetObjectIDPath(c, constant.IDKey)
 
-	u, err := service.GetUser(id)
+	u, err := service.ReadUserByID(id)
 	if err != nil {
 		errors.Send(c, err)
 		return
 	}
 
-	tweetsCount, likesCount, err := service.GetTweetsInfo(id)
+	tweetsCount, likesCount, err := service.ReadTweetsCountsByID(id)
 	if err != nil {
 		errors.Send(c, err)
 		return
 	}
 
-	followingCount, followerCount, err := service.GetFollowsInfo(id)
+	followingCount, followerCount, err := service.ReadFollowsCountsByID(id)
 	if err != nil {
 		errors.Send(c, err)
 		return
