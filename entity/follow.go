@@ -1,6 +1,11 @@
 package entity
 
-import "gopkg.in/mgo.v2/bson"
+import (
+	"github.com/techcampman/twitter-d-server/db/collection"
+	"github.com/techcampman/twitter-d-server/env"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
+)
 
 type (
 	// Follow ... structure of a follow
@@ -10,3 +15,37 @@ type (
 		TargetID bson.ObjectId `json:"targetId" bson:"targetId" validate:"objectId"`
 	}
 )
+
+func initFollowsCollection() {
+	follows, err := collection.Follows()
+	env.AssertErrForInit(err)
+
+	defer follows.Close()
+
+	err = follows.EnsureIndex(mgo.Index{
+		Key:        []string{"userId"},
+		Unique:     false,
+		DropDups:   false,
+		Background: true,
+		Sparse:     true,
+	})
+	env.AssertErrForInit(err)
+
+	err = follows.EnsureIndex(mgo.Index{
+		Key:        []string{"targetId"},
+		Unique:     false,
+		DropDups:   false,
+		Background: true,
+		Sparse:     true,
+	})
+	env.AssertErrForInit(err)
+
+	err = follows.EnsureIndex(mgo.Index{
+		Key:        []string{"userId", "targetId"},
+		Unique:     true,
+		DropDups:   false,
+		Background: true,
+		Sparse:     true,
+	})
+	env.AssertErrForInit(err)
+}
