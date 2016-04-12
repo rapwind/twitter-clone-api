@@ -16,4 +16,4 @@ var mdb = env.GetMongoDB()
 func Users() (c *mongo.Collection, err error) { return mdb.GetCollection(users, true) }
 
 // Follows return *Collection for "follow" collection
-func Follows () (c *mongo.Collection, err error) { return mdb.GetCollection(follows, true) }
+func Follows() (c *mongo.Collection, err error) { return mdb.GetCollection(follows, true) }
