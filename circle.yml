@@ -20,3 +20,10 @@ test:
     - cd "${GOPATH%%:*}/src/$IMPORT_PATH/" && go get
     - goimports -l ./ | xargs -r false
     - godep go test ./...
+deployment:
+  release:
+    branch: master
+    commands:
+      - pip install awsebcli
+      - eb setenv PROJECT_ENV=release
+      - eb deploy poppo-api-env
