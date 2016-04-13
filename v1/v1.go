@@ -24,5 +24,9 @@ func AddV1Endpoints(r *gin.Engine) {
 		{
 			tweets.GET("/:"+constant.IDKey, getTweet)
 		}
+		images := v1.Group("/images")
+		{
+			images.POST("/", uploadImage)
+		}
 	}
 }
