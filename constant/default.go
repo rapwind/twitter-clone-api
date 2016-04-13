@@ -1,6 +1,10 @@
 package constant
 
 const (
+
+	// DefaultLimitGetFollowing for the number of following users that can be got
+	DefaultLimitGetFollowing = 10
+
 	// ImageMaxSize for a storage
 	ImageMaxSize = 2097152
 )
