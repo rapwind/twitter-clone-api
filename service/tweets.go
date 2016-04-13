@@ -64,7 +64,7 @@ func ReadTweetsCountsByUser(u entity.User) (tweetsCount int, likesCount int, err
 	}
 	defer tweets.Close()
 
-	tweetsCount, err = tweets.Find(bson.M{"userId": u.UserID}).Count()
+	tweetsCount, err = tweets.Find(bson.M{"userId": u.ID}).Count()
 	if err != nil {
 		return
 	}
