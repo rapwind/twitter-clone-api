@@ -29,7 +29,7 @@ func getFollowing(c *gin.Context) {
 		func(f entity.Follow) bson.ObjectId {
 			return f.TargetID
 		},
-		constant.DefaultLimitFollowingUsers)
+		constant.DefaultLimitGetFollowing)
 }
 
 func getFollower(c *gin.Context) {
@@ -37,7 +37,7 @@ func getFollower(c *gin.Context) {
 		func(f entity.Follow) bson.ObjectId {
 			return f.UserID
 		},
-		constant.DefaultLimitFollowerUsers)
+		constant.DefaultLimitGetFollower)
 }
 
 func getFollows(c *gin.Context, key string, getKey func(entity.Follow) bson.ObjectId, defaultLimit int) {
