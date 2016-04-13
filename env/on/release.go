@@ -69,11 +69,10 @@ func (rel *Release) Init() (err error) {
 	})
 
 	// AWS Configurations
-	// TODO - Fix Credentials and Region
 	rel.awsConfig = &aws.Config{
-		Credentials:            credentials.NewStaticCredentials("", "", ""),
+		Credentials:            credentials.NewStaticCredentials("AKIAJ36RD7B6AM3JWFTA", "CPEmcV/QLmQDnpQvICOoIDC2uhz4Mmq+AE0MsrSv", ""),
 		Endpoint:               aws.String(""),
-		Region:                 aws.String(""),
+		Region:                 aws.String("us-east-1"),
 		DisableSSL:             aws.Bool(false),
 		HTTPClient:             http.DefaultClient,
 		LogLevel:               aws.LogLevel(aws.LogOff),
@@ -81,10 +80,9 @@ func (rel *Release) Init() (err error) {
 		DisableParamValidation: aws.Bool(false),
 	}
 	// Storage - currently AWS S3
-	// TODO - Fix bucketName
-	bucketName := "static.poppo"
+	bucketName := "static.poppo.me"
 	rel.Storage = s3.NewStorageByS3(rel.awsConfig, bucketName)
-	rel.storageURL, err = url.Parse("http://" + bucketName)
+	rel.storageURL, err = url.Parse("https://static.poppo.me")
 	if err != nil {
 		return err
 	}
