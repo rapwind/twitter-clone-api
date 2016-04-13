@@ -9,7 +9,6 @@ import (
 	"github.com/techcampman/twitter-d-server/errors"
 	"github.com/techcampman/twitter-d-server/service"
 	"github.com/techcampman/twitter-d-server/utils"
-	"gopkg.in/mgo.v2/bson"
 )
 
 func getUser(c *gin.Context) {
@@ -25,26 +24,10 @@ func getUser(c *gin.Context) {
 }
 
 func getFollowing(c *gin.Context) {
-	getFollows(c, "userId",
-		func(f entity.Follow) bson.ObjectId {
-			return f.TargetID
-		},
-		constant.DefaultLimitGetFollowing)
-}
-
-func getFollower(c *gin.Context) {
-	getFollows(c, "targetId",
-		func(f entity.Follow) bson.ObjectId {
-			return f.UserID
-		},
-		constant.DefaultLimitGetFollower)
-}
-
-func getFollows(c *gin.Context, key string, getKey func(entity.Follow) bson.ObjectId, defaultLimit int) {
 	id := utils.GetObjectIDPath(c, constant.IDKey)
-	offset, limit := utils.GetRangeParams(c, defaultLimit)
+	offset, limit := utils.GetRangeParams(c, constant.DefaultLimitGetFollows)
 
-	flws, err := service.ReadFollowsByID(id, key, offset, limit)
+	flws, err := service.ReadFollowingByID(id, offset, limit)
 	if err != nil {
 		errors.Send(c, err)
 		return
@@ -52,7 +35,29 @@ func getFollows(c *gin.Context, key string, getKey func(entity.Follow) bson.Obje
 
 	users := make([]*entity.UserDetail, len(flws))
 	for i, v := range flws {
-		users[i], err = service.ReadUserDetailByID(getKey(v))
+		users[i], err = service.ReadUserDetailByID(v.TargetID)
+		if err != nil {
+			errors.Send(c, err)
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, users)
+}
+
+func getFollower(c *gin.Context) {
+	id := utils.GetObjectIDPath(c, constant.IDKey)
+	offset, limit := utils.GetRangeParams(c, constant.DefaultLimitGetFollows)
+
+	flws, err := service.ReadFollowerByID(id, offset, limit)
+	if err != nil {
+		errors.Send(c, err)
+		return
+	}
+
+	users := make([]*entity.UserDetail, len(flws))
+	for i, v := range flws {
+		users[i], err = service.ReadUserDetailByID(v.UserID)
 		if err != nil {
 			errors.Send(c, err)
 			return
