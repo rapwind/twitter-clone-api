@@ -9,7 +9,6 @@ import (
 	"github.com/techcampman/twitter-d-server/errors"
 	"github.com/techcampman/twitter-d-server/service"
 	"github.com/techcampman/twitter-d-server/utils"
-	"fmt"
 )
 
 func getUser(c *gin.Context) {
@@ -34,13 +33,10 @@ func getFollowing(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(flws)
-
 	users := make([]*entity.UserDetail, limit)
 	for i, v := range flws {
 		users[i], err = service.ReadUserDetailByID(v.TargetID)
 		if err != nil {
-			fmt.Println(v.TargetID)
 			errors.Send(c, err)
 			return
 		}
