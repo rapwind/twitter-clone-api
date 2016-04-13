@@ -14,6 +14,8 @@ func AddV1Endpoints(r *gin.Engine) {
 		logging.ActivityLogger(env.GetActivityLogger(), nil),
 	)
 	{
+		v1.POST("/apps", createInstallation)
+
 		users := v1.Group("/users")
 		{
 			// users.Use(middleware.CheckSession())
