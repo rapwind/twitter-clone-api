@@ -111,3 +111,8 @@ fabric.properties
 
 .elasticbeanstalk/*
 !.elasticbeanstalk/config.yml
+
+# Test data
+fixtures/follows.csv
+fixtures/tweets.csv
+fixtures/users.csv
