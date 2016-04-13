@@ -19,11 +19,11 @@ const (
 )
 
 // GetFollowingIDKey returns a following user ID from entity.Follow.
-func GetFollowingIDKey (v entity.Follow) bson.ObjectId {
+func GetFollowingIDKey(v entity.Follow) bson.ObjectId {
 	return v.UserID
 }
 
 // GetFollowerIDKey returns a followed user ID from entity.Follow.
-func GetFollowerIDKey (v entity.Follow) bson.ObjectId {
+func GetFollowerIDKey(v entity.Follow) bson.ObjectId {
 	return v.TargetID
 }
