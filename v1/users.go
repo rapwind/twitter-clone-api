@@ -20,7 +20,7 @@ func getUser(c *gin.Context) {
 		return
 	}
 
-	tweetsCount, likesCount, err := service.ReadTweetsCountsByUserID(id)
+	tweetsCount, likesCount, err := service.ReadTweetsCountsByUser(*u)
 	if err != nil {
 		errors.Send(c, err)
 		return
