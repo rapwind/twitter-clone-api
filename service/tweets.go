@@ -39,7 +39,7 @@ func ReadTweetDetailWithoutReplyByID(id bson.ObjectId) (tdwr *entity.TweetDetail
 
 	liked := false // TODO: obtain "liked"
 
-	tdwr = &entity.TweetDetailWithoutReply{t, u, liked}
+	tdwr = &entity.TweetDetailWithoutReply{t, u, &liked}
 	return
 }
 

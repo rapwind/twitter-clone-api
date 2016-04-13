@@ -27,6 +27,6 @@ type (
 	TweetDetailWithoutReply struct {
 		*Tweet
 		User  *UserDetail `json:"user"`
-		Liked bool        `json:"liked"`
+		Liked *bool       `json:"liked,omitempty"`
 	}
 )
