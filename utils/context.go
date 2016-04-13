@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/dogenzaka/gin-tools/validation/validator"
 	"github.com/gin-gonic/gin"
 	"github.com/techcampman/twitter-d-server/constant"
 	"gopkg.in/mgo.v2/bson"
@@ -17,4 +18,14 @@ func GetObjectIDPath(c *gin.Context, name string) (id bson.ObjectId) {
 // SetLoginUserID sets userId session on session
 func SetLoginUserID(c *gin.Context, userID bson.ObjectId) {
 	c.Set(constant.LoginUserKey, userID)
+}
+
+// GetRangeParams obtains "limit" and "offset" parameters
+func GetRangeParams(c *gin.Context, defaultLimit int) (offset int, limit int) {
+	offset, _ = validator.UInt{}.Check(c.Request.FormValue("offset"))
+	limit, _ = validator.UInt{}.Check(c.Request.FormValue("limit"))
+	if limit == 0 {
+		limit = defaultLimit
+	}
+	return
 }
