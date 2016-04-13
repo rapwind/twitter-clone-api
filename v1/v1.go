@@ -19,5 +19,9 @@ func AddV1Endpoints(r *gin.Engine) {
 			// users.Use(middleware.CheckSession())
 			users.GET("/:"+constant.IDKey, getUser)
 		}
+		tweets := v1.Group("/tweets")
+		{
+			tweets.GET("/:"+constant.IDKey, getTweet)
+		}
 	}
 }

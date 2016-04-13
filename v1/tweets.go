@@ -10,14 +10,14 @@ import (
 	"github.com/techcampman/twitter-d-server/utils"
 )
 
-func getUser(c *gin.Context) {
+func getTweet(c *gin.Context) {
 	id := utils.GetObjectIDPath(c, constant.IDKey)
 
-	ud, err := service.ReadUserDetailByID(id)
+	td, err := service.ReadTweetDetailByID(id)
 	if err != nil {
 		errors.Send(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, ud)
+	c.JSON(http.StatusOK, td)
 }
