@@ -25,7 +25,7 @@ func getUser(c *gin.Context) {
 
 func getFollowing(c *gin.Context) {
 	id := utils.GetObjectIDPath(c, constant.IDKey)
-	offset, limit := utils.GetRangeParams(c, constant.DefaultLimitFollowingUsers)
+	offset, limit := utils.GetRangeParams(c, constant.DefaultLimitGetFollowing)
 
 	flws, err := service.ReadFollowingByID(id, offset, limit)
 	if err != nil {
