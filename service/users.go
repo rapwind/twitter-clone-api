@@ -40,8 +40,8 @@ func ReadUserByID(id bson.ObjectId) (u *entity.User, err error) {
 	return
 }
 
-// ReadFollowsByID returns an array of entity.Follow
-func ReadFollowsByID(id bson.ObjectId, key string, offset int, limit int) (flws []entity.Follow, err error) {
+// ReadFollowsByQuery returns an array of entity.Follow
+func ReadFollowsByQuery(query bson.M, offset int, limit int) (flws []entity.Follow, err error) {
 	follows, err := collection.Follows()
 	if err != nil {
 		return
@@ -49,7 +49,7 @@ func ReadFollowsByID(id bson.ObjectId, key string, offset int, limit int) (flws 
 	defer follows.Close()
 
 	flws = []entity.Follow{}
-	err = follows.Find(bson.M{key: id}).Sort("-_id").Skip(offset).Limit(limit).All(&flws)
+	err = follows.Find(query).Sort("-_id").Skip(offset).Limit(limit).All(&flws)
 	return
 }
 

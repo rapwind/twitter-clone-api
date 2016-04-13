@@ -25,26 +25,23 @@ func getUser(c *gin.Context) {
 }
 
 func getFollowing(c *gin.Context) {
-	getFollows(c, "userId",
-		func(f entity.Follow) bson.ObjectId {
-			return f.TargetID
-		},
-		constant.DefaultLimitGetFollowing)
+	getFollows(c, constant.FollowingIDKey, constant.GetFollowerIDKey, constant.DefaultLimitGetFollowing)
 }
 
 func getFollower(c *gin.Context) {
-	getFollows(c, "targetId",
-		func(f entity.Follow) bson.ObjectId {
-			return f.UserID
-		},
-		constant.DefaultLimitGetFollower)
+	getFollows(c, constant.FollowerIDKey, constant.GetFollowingIDKey, constant.DefaultLimitGetFollower)
 }
 
-func getFollows(c *gin.Context, key string, getKey func(entity.Follow) bson.ObjectId, defaultLimit int) {
+// getFollows performs as GET FOLLOWING or GET FOLLOWER API
+//   originKey     ... the key of user ID: you obtain following users or followers of this user
+//                     (constant.FollowingIDKey or constant.FollowerIDKey).
+//   getPartnerKey ... a function that obtains the key of user IDs of following users or followers
+//                     (constant.GetFollowingIDKey or constant.GetFollowerIDKey).
+func getFollows(c *gin.Context, originKey constant.FollowsKey, getPartnerKey func(entity.Follow) bson.ObjectId, defaultLimit int) {
 	id := utils.GetObjectIDPath(c, constant.IDKey)
 	offset, limit := utils.GetRangeParams(c, defaultLimit)
 
-	flws, err := service.ReadFollowsByID(id, key, offset, limit)
+	flws, err := service.ReadFollowsByQuery(bson.M{(string)(originKey): id}, offset, limit)
 	if err != nil {
 		errors.Send(c, err)
 		return
@@ -52,7 +49,7 @@ func getFollows(c *gin.Context, key string, getKey func(entity.Follow) bson.Obje
 
 	users := make([]*entity.UserDetail, len(flws))
 	for i, v := range flws {
-		users[i], err = service.ReadUserDetailByID(getKey(v))
+		users[i], err = service.ReadUserDetailByID(getPartnerKey(v))
 		if err != nil {
 			errors.Send(c, err)
 			return
