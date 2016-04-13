@@ -33,7 +33,7 @@ func getFollowing(c *gin.Context) {
 		return
 	}
 
-	users := make([]*entity.UserDetail, limit)
+	users := make([]*entity.UserDetail, len(flws))
 	for i, v := range flws {
 		users[i], err = service.ReadUserDetailByID(v.TargetID)
 		if err != nil {
