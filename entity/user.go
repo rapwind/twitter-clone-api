@@ -9,7 +9,7 @@ import (
 type (
 	// User ... structure of a user
 	User struct {
-		UserID                    bson.ObjectId `json:"userId"                              bson:"userId"                              validate:"objectId"`
+		UserID                    bson.ObjectId `json:"userId"                              bson:"_id"                                 validate:"objectId"`
 		Name                      string        `json:"name"                                bson:"name"                                validate:"min=1"`
 		ScreenName                string        `json:"screenName"                          bson:"screenName"                          validate:"min=1"`
 		ProfileImageURL           string        `json:"profileImageUrl,omitempty"           bson:"profileImageUrl,omitempty"`

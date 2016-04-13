@@ -20,15 +20,8 @@ func getTweet(c *gin.Context) {
 		return
 	}
 
-	inReplyToUser := (*entity.User)(nil)
 	inReplyToTweet := (*entity.TweetDetailWithoutReply)(nil)
-	if t.InReplyToUserID.Valid() && t.InReplyToTweetID.Valid() {
-		inReplyToUser, err = service.ReadUserByID(t.InReplyToUserID)
-		if err != nil {
-			errors.Send(c, err)
-			return
-		}
-
+	if t.InReplyToTweetID.Valid() {
 		inReplyToTweet, err = service.ReadTweetDetailWithoutReplyByID(t.InReplyToTweetID)
 		if err != nil {
 			errors.Send(c, err)
@@ -36,7 +29,7 @@ func getTweet(c *gin.Context) {
 		}
 	}
 
-	td := &entity.TweetDetail{t, inReplyToUser, inReplyToTweet}
+	td := &entity.TweetDetail{t, inReplyToTweet}
 
 	c.JSON(http.StatusOK, td)
 }

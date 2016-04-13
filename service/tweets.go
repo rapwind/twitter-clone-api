@@ -35,8 +35,8 @@ func ReadTweetByID(id bson.ObjectId) (t *entity.Tweet, err error) {
 	return
 }
 
-// ReadTweetsCountsByID gets entity.UserDetail.TweetsCount and LikesCount
-func ReadTweetsCountsByID(id bson.ObjectId) (tweetsCount int, likesCount int, err error) {
+// ReadTweetsCountsByUserID gets entity.UserDetail.TweetsCount and LikesCount
+func ReadTweetsCountsByUserID(id bson.ObjectId) (tweetsCount int, likesCount int, err error) {
 	tweets, err := collection.Tweets()
 	if err != nil {
 		return

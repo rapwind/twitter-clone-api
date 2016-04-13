@@ -12,7 +12,6 @@ type (
 		ID               bson.ObjectId `json:"id"                         bson:"_id"                        validate:"objectId"`
 		Text             string        `json:"text"                       bson:"text"                       validate:"min=1"`
 		UserID           bson.ObjectId `json:"-"                          bson:"userId"                     validate:"objectId"`
-		InReplyToUserID  bson.ObjectId `json:"-"                          bson:"inReplyToUserId,omitempty"  validate:"objectId"`
 		InReplyToTweetID bson.ObjectId `json:"inReplyToTweetId,omitempty" bson:"inReplyToTweetId,omitempty" validate:"objectId"`
 		CreatedAt        time.Time     `json:"createdAt"                  bson:"createdAt"`
 		DeletedAt        *time.Time    `json:"-"                          bson:"deletedAt,omitempty"`
@@ -21,13 +20,12 @@ type (
 	// TweetDetail ... structure of a tweet "more" information
 	TweetDetail struct {
 		*TweetDetailWithoutReply
-		InReplyToUser  *User                    `json:"inReplyToUser"`
-		InReplyToTweet *TweetDetailWithoutReply `json:"inReplyToTweet"`
+		InReplyToTweet *TweetDetailWithoutReply `json:"inReplyToTweet,omitempty"`
 	}
 
 	// TweetDetailWithoutReply ... structure of a tweet "more" information
 	TweetDetailWithoutReply struct {
 		*Tweet
-		User *User `json:"user"`
+		User *User `json:"user,omitempty"`
 	}
 )
