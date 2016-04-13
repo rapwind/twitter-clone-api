@@ -9,7 +9,6 @@ import (
 	"github.com/techcampman/twitter-d-server/errors"
 	"github.com/techcampman/twitter-d-server/service"
 	"github.com/techcampman/twitter-d-server/utils"
-	"gopkg.in/mgo.v2/bson"
 )
 
 func getUser(c *gin.Context) {
@@ -25,23 +24,10 @@ func getUser(c *gin.Context) {
 }
 
 func getFollowing(c *gin.Context) {
-	getFollows(c, constant.FollowingIDKey, constant.GetFollowerIDKey, constant.DefaultLimitGetFollowing)
-}
-
-func getFollower(c *gin.Context) {
-	getFollows(c, constant.FollowerIDKey, constant.GetFollowingIDKey, constant.DefaultLimitGetFollower)
-}
-
-// getFollows performs as GET FOLLOWING or GET FOLLOWER API
-//   originKey     ... the key of user ID: you obtain following users or followers of this user
-//                     (constant.FollowingIDKey or constant.FollowerIDKey).
-//   getPartnerKey ... a function that obtains the key of user IDs of following users or followers
-//                     (constant.GetFollowingIDKey or constant.GetFollowerIDKey).
-func getFollows(c *gin.Context, originKey constant.FollowsKey, getPartnerKey func(entity.Follow) bson.ObjectId, defaultLimit int) {
 	id := utils.GetObjectIDPath(c, constant.IDKey)
-	offset, limit := utils.GetRangeParams(c, defaultLimit)
+	offset, limit := utils.GetRangeParams(c, constant.DefaultLimitGetFollows)
 
-	flws, err := service.ReadFollowsByQuery(bson.M{(string)(originKey): id}, offset, limit)
+	flws, err := service.ReadFollowingByID(id, offset, limit)
 	if err != nil {
 		errors.Send(c, err)
 		return
@@ -49,7 +35,29 @@ func getFollows(c *gin.Context, originKey constant.FollowsKey, getPartnerKey fun
 
 	users := make([]*entity.UserDetail, len(flws))
 	for i, v := range flws {
-		users[i], err = service.ReadUserDetailByID(getPartnerKey(v))
+		users[i], err = service.ReadUserDetailByID(v.TargetID)
+		if err != nil {
+			errors.Send(c, err)
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, users)
+}
+
+func getFollower(c *gin.Context) {
+	id := utils.GetObjectIDPath(c, constant.IDKey)
+	offset, limit := utils.GetRangeParams(c, constant.DefaultLimitGetFollows)
+
+	flws, err := service.ReadFollowerByID(id, offset, limit)
+	if err != nil {
+		errors.Send(c, err)
+		return
+	}
+
+	users := make([]*entity.UserDetail, len(flws))
+	for i, v := range flws {
+		users[i], err = service.ReadUserDetailByID(v.UserID)
 		if err != nil {
 			errors.Send(c, err)
 			return
