@@ -9,9 +9,10 @@ import (
 type (
 	// Session ... structure of a session
 	Session struct {
-		ID        bson.ObjectId `bson:"_id" validate:"objectId"`
-		UserID    bson.ObjectId `bson:"_id" validate:"objectId"`
-		CreatedAt time.Time     `bson:"createdAt"`
+		ID             bson.ObjectId `bson:"_id"            validate:"objectId"`
+		UserID         bson.ObjectId `bson:"userId"         validate:"objectId"`
+		InstallationID bson.ObjectId `bson:"installationId" validate:"objectId"`
+		CreatedAt      time.Time     `bson:"createdAt"`
 	}
 
 	// SessionRequest ... structure of a session request

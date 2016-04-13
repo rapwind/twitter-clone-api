@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/techcampman/twitter-d-server/constant"
+	"github.com/techcampman/twitter-d-server/entity"
 	"github.com/techcampman/twitter-d-server/env"
 	"github.com/techcampman/twitter-d-server/errors"
 	"github.com/techcampman/twitter-d-server/logger"
@@ -44,14 +45,19 @@ func CheckSession() gin.HandlerFunc {
 }
 
 // SetSession sets userID on session
-func SetSession(c *gin.Context, userID bson.ObjectId) (err error) {
+func SetSession(c *gin.Context, s *entity.Session) (err error) {
 
-	if !userID.Valid() {
-		return fmt.Errorf("invalid userID = %v", userID)
+	if !s.UserID.Valid() {
+		return fmt.Errorf("invalid userID = %v", s.UserID)
 	}
 
-	sid := string(bson.NewObjectId().Hex())
-	err = env.GetCache().Set(constant.UserSessionPrefix+sid, userID.Hex(), constant.SessionExpires)
+	err = service.CreateSession(s)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	sid := string(s.ID.Hex())
+	err = env.GetCache().Set(constant.UserSessionPrefix+sid, s.UserID.Hex(), constant.SessionExpires)
 	if err != nil {
 		logger.Error(err)
 		return
@@ -106,8 +112,7 @@ func getSession(c *gin.Context) (userID bson.ObjectId, err error) {
 	if err != nil {
 		s, err := service.ReadSessionByID(bson.ObjectIdHex(sid))
 		if err == nil {
-			userID = s.UserID
-			SetSession(c, userID)
+			SetSession(c, s)
 		}
 	} else {
 		userID = bson.ObjectIdHex(string(reply.([]byte)))

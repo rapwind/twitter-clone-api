@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/techcampman/twitter-d-server/constant"
 	"github.com/techcampman/twitter-d-server/db/collection"
 	"github.com/techcampman/twitter-d-server/entity"
 	"github.com/techcampman/twitter-d-server/errors"
@@ -18,13 +19,19 @@ import (
 func signin(c *gin.Context) {
 
 	// validate request
+	installationID := c.Request.Header.Get(constant.XPoppoInstallationID)
+	if installationID == "" {
+		errors.Send(c, errors.Unauthorized())
+		return
+	}
+
 	b, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
 		errors.Send(c, errors.RequestEntityTooLarge())
 		return
 	}
 	if len(b) == 0 {
-		c.AbortWithStatus(http.StatusNoContent)
+		errors.Send(c, errors.Unauthorized())
 		return
 	}
 	if err := jsonschema.JSONSchema(b, jsonschema.V1PostSessionDocument); err != nil {
@@ -52,7 +59,10 @@ func signin(c *gin.Context) {
 		return
 	}
 
-	middleware.SetSession(c, u.ID)
+	s := new(entity.Session)
+	s.UserID = u.ID
+	s.InstallationID = bson.ObjectIdHex(installationID)
+	middleware.SetSession(c, s)
 
 	c.JSON(http.StatusOK, u)
 }
