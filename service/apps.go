@@ -2,11 +2,12 @@ package service
 
 import (
 	"fmt"
-	"gopkg.in/mgo.v2/bson"
-	"gopkg.in/mgo.v2"
-	"github.com/techcampman/twitter-d-server/entity"
+
 	"github.com/techcampman/twitter-d-server/db/collection"
+	"github.com/techcampman/twitter-d-server/entity"
 	"github.com/techcampman/twitter-d-server/logger"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 // CreateInstallation inserts a installation

@@ -6,10 +6,10 @@ import (
 )
 
 const (
-	installations   = "installation"
-	users           = "user"
-	follows         = "follow"
-	tweets          = "tweet"
+	installations = "installation"
+	users         = "user"
+	follows       = "follow"
+	tweets        = "tweet"
 )
 
 var mdb = env.GetMongoDB()

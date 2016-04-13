@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/xeipuuv/gojsonschema"
-	"github.com/techcampman/twitter-d-server/logger"
 	"github.com/techcampman/twitter-d-server/errors"
+	"github.com/techcampman/twitter-d-server/logger"
+	"github.com/xeipuuv/gojsonschema"
 )
 
 var subMatchReg = regexp.MustCompile("\"(.*)\"")

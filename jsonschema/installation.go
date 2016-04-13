@@ -1,8 +1,8 @@
 package jsonschema
 
 import (
-	"github.com/xeipuuv/gojsonschema"
 	"github.com/techcampman/twitter-d-server/env"
+	"github.com/xeipuuv/gojsonschema"
 )
 
 var (
@@ -16,7 +16,7 @@ var (
 	v1CreateInstallationSchema = map[string]interface{}{
 		"type": "object",
 		"properties": map[string]interface{}{
-			"clientType": clientType,
+			"clientType":  clientType,
 			"deviceToken": deviceToken,
 		},
 		"additionalProperties": false,

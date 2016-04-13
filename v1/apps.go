@@ -1,16 +1,17 @@
 package v1
 
 import (
-	"github.com/gin-gonic/gin"
-	"io/ioutil"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
-	"github.com/techcampman/twitter-d-server/errors"
-	"github.com/techcampman/twitter-d-server/entity"
-	"github.com/techcampman/twitter-d-server/service"
-	"github.com/techcampman/twitter-d-server/jsonschema"
+
+	"github.com/gin-gonic/gin"
 	"github.com/techcampman/twitter-d-server/constant"
+	"github.com/techcampman/twitter-d-server/entity"
+	"github.com/techcampman/twitter-d-server/errors"
+	"github.com/techcampman/twitter-d-server/jsonschema"
+	"github.com/techcampman/twitter-d-server/service"
 )
 
 func createInstallation(c *gin.Context) {
