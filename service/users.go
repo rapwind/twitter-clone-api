@@ -13,7 +13,7 @@ func ReadUserDetailByID(id bson.ObjectId) (ud *entity.UserDetail, err error) {
 		return
 	}
 
-	tweetsCount, likesCount, err := ReadTweetsCountsByUserID(id)
+	tweetsCount, likesCount, err := ReadTweetsCountsByUser(*u)
 	if err != nil {
 		return
 	}
