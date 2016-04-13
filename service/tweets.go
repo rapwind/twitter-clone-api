@@ -6,6 +6,25 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+// ReadTweetDetailByID returns TweetDetail by tweet ID
+func ReadTweetDetailByID(id bson.ObjectId) (td *entity.TweetDetail, err error) {
+	t, err := ReadTweetDetailWithoutReplyByID(id)
+	if err != nil {
+		return
+	}
+
+	inReplyToTweet := (*entity.TweetDetailWithoutReply)(nil)
+	if t.InReplyToTweetID.Valid() {
+		inReplyToTweet, err = ReadTweetDetailWithoutReplyByID(t.InReplyToTweetID)
+		if err != nil {
+			return
+		}
+	}
+
+	td = &entity.TweetDetail{t, inReplyToTweet}
+	return
+}
+
 // ReadTweetDetailWithoutReplyByID returns entity.TweetDetailWithoutReply by tweet ID
 func ReadTweetDetailWithoutReplyByID(id bson.ObjectId) (tdwr *entity.TweetDetailWithoutReply, err error) {
 	t, err := ReadTweetByID(id)
@@ -13,12 +32,14 @@ func ReadTweetDetailWithoutReplyByID(id bson.ObjectId) (tdwr *entity.TweetDetail
 		return
 	}
 
-	u, err := ReadUserByID(t.UserID)
+	u, err := ReadUserDetailByID(t.UserID)
 	if err != nil {
 		return
 	}
 
-	tdwr = &entity.TweetDetailWithoutReply{t, u}
+	liked := false // TODO: obtain "liked"
+
+	tdwr = &entity.TweetDetailWithoutReply{t, u, liked}
 	return
 }
 
