@@ -16,6 +16,11 @@ func AddV1Endpoints(r *gin.Engine) {
 	{
 		v1.POST("/apps", createInstallation)
 
+		session := v1.Group("/sessions")
+		{
+			session.POST("/", signin)
+			session.DELETE("/", signout)
+		}
 		users := v1.Group("/users")
 		{
 			// users.Use(middleware.CheckSession())

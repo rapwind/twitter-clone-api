@@ -14,9 +14,4 @@ type (
 		DeviceToken string        `json:"deviceToken,omitempty" bson:"deviceToken,omitempty"`
 		CreatedAt   time.Time     `json:"createdAt"             bson:"createdAt"`
 	}
-
-	// InstallationHeader ... structure of a installation header
-	InstallationHeader struct {
-		ID bson.ObjectId `json:"-"`
-	}
 )
