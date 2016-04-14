@@ -3,6 +3,9 @@ package entity
 import (
 	"time"
 
+	"github.com/techcampman/twitter-d-server/db/collection"
+	"github.com/techcampman/twitter-d-server/env"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -12,6 +15,7 @@ type (
 		ID                        bson.ObjectId `json:"id"                                  bson:"_id"                                 validate:"objectId"`
 		Name                      string        `json:"name"                                bson:"name"                                validate:"min=1"`
 		ScreenName                string        `json:"screenName"                          bson:"screenName"                          validate:"min=1"`
+		PasswordHash              string        `json:"-"                                   bson:"passwordHash"                        validate:"min=1"`
 		ProfileImageURL           string        `json:"profileImageUrl,omitempty"           bson:"profileImageUrl,omitempty"`
 		ProfileBackgroundImageURL string        `json:"profileBackgroundImageUrl,omitempty" bson:"profileBackgroundImageUrl,omitempty"`
 		Biography                 string        `json:"biography,omitempty"                 bson:"biography,omitempty"`
@@ -31,4 +35,29 @@ type (
 		FollowingCount int   `json:"followingCount"`
 		Following      *bool `json:"following,omitempty"`
 	}
+
+	// UserRegisterRequest ... structure of a user register request
+	UserRegisterRequest struct {
+		Name         string `json:"name"         bson:"name"         validate:"min=1"`
+		ScreenName   string `json:"screenName"   bson:"screenName"   validate:"min=1"`
+		PasswordHash string `json:"passwordHash" bson:"passwordHash" validate:"min=1"`
+	}
 )
+
+func initUsersCollection() {
+
+	// ensure index for users collection
+	users, err := collection.Users()
+	env.AssertErrForInit(err)
+
+	defer users.Close()
+
+	err = users.EnsureIndex(mgo.Index{
+		Key:        []string{"screenName"},
+		Unique:     true,
+		DropDups:   false,
+		Background: true,
+		Sparse:     true,
+	})
+	env.AssertErrForInit(err)
+}
