@@ -33,6 +33,16 @@ func GetRangeParams(c *gin.Context, defaultLimit int) (offset int, limit int) {
 	return
 }
 
+// GetObjectIDParam gets ObjectID from query parameters
+func GetObjectIDParam(c *gin.Context, name string) (id bson.ObjectId) {
+
+	if v := c.Request.FormValue(name); v != "" && bson.IsObjectIdHex(v) {
+		id = bson.ObjectIdHex(v)
+	}
+
+	return
+}
+
 // GetPoppoHeader ... get beaut header
 func GetPoppoHeader(c *gin.Context) *entity.PoppoHeader {
 	h := c.Request.Header
