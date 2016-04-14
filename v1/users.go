@@ -17,14 +17,6 @@ import (
 )
 
 func registerUser(c *gin.Context) {
-
-	// validate request
-	installationID := c.Request.Header.Get(constant.XPoppoInstallationID)
-	if installationID == "" {
-		errors.Send(c, errors.Unauthorized())
-		return
-	}
-
 	b, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
 		errors.Send(c, errors.RequestEntityTooLarge())
