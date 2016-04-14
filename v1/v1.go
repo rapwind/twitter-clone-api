@@ -23,6 +23,7 @@ func AddV1Endpoints(r *gin.Engine) {
 		}
 		tweets := v1.Group("/tweets")
 		{
+			tweets.GET("", getTweets)
 			tweets.GET("/:"+constant.IDKey, getTweet)
 		}
 		images := v1.Group("/images")

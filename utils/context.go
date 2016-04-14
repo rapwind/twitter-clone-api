@@ -29,3 +29,13 @@ func GetRangeParams(c *gin.Context, defaultLimit int) (offset int, limit int) {
 	}
 	return
 }
+
+// GetObjectIDParam gets ObjectID from query parameters
+func GetObjectIDParam(c *gin.Context, name string) (id bson.ObjectId) {
+
+	if v := c.Request.FormValue(name); v != "" && bson.IsObjectIdHex(v) {
+		id = bson.ObjectIdHex(v)
+	}
+
+	return
+}

@@ -48,8 +48,18 @@ func ReadFollowingByID(id bson.ObjectId, offset int, limit int) (flws []entity.F
 	}
 	defer follows.Close()
 
+	q := follows.Find(bson.M{"userId": id}).Sort("-_id")
+
+	if offset > 0 {
+		q = q.Skip(offset)
+	}
+
+	if limit > 0 {
+		q = q.Limit(limit)
+	}
+
 	flws = []entity.Follow{}
-	err = follows.Find(bson.M{"userId": id}).Sort("-_id").Skip(offset).Limit(limit).All(&flws)
+	err = q.All(&flws)
 	return
 }
 
@@ -61,8 +71,18 @@ func ReadFollowerByID(id bson.ObjectId, offset int, limit int) (flws []entity.Fo
 	}
 	defer follows.Close()
 
+	q := follows.Find(bson.M{"targetId": id}).Sort("-_id")
+
+	if offset > 0 {
+		q = q.Skip(offset)
+	}
+
+	if limit > 0 {
+		q = q.Limit(limit)
+	}
+
 	flws = []entity.Follow{}
-	err = follows.Find(bson.M{"targetId": id}).Sort("-_id").Skip(offset).Limit(limit).All(&flws)
+	err = q.All(&flws)
 	return
 }
 

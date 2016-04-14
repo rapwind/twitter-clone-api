@@ -2,6 +2,6 @@ package entity
 
 func init() {
 
-	initFollowsCollection()
+	//initFollowsCollection()
 
 }
