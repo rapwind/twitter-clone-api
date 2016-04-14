@@ -6,12 +6,20 @@ import (
 )
 
 const (
-	users   = "user"
-	follows = "follow"
-	tweets  = "tweet"
+	installations = "installation"
+	sessions      = "session"
+	users         = "user"
+	follows       = "follow"
+	tweets        = "tweet"
 )
 
 var mdb = env.GetMongoDB()
+
+// Installations return *Collection for "installation" collection
+func Installations() (c *mongo.Collection, err error) { return mdb.GetCollection(installations, true) }
+
+// Sessions return *Collection for "session" collection
+func Sessions() (c *mongo.Collection, err error) { return mdb.GetCollection(sessions, true) }
 
 // Users return *Collection for "user" collection
 func Users() (c *mongo.Collection, err error) { return mdb.GetCollection(users, true) }

@@ -55,12 +55,12 @@ func readTweets(limit int, maxID bson.ObjectId, userID bson.ObjectId, following 
 				for i, v := range flws {
 					ids[i] = v.TargetID
 				}
-				ids[n] = userId
+				ids[n] = userID
 				m = append(m, bson.M{"userId": bson.M{"$in": ids}})
 			}
 		} else {
 			// Following users' tweets are not shown.
-			m = append(m, bson.M{"userId": userId})
+			m = append(m, bson.M{"userId": userID})
 		}
 	}
 

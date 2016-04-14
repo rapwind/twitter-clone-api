@@ -1,9 +1,12 @@
 package utils
 
 import (
+	"fmt"
+
 	"github.com/dogenzaka/gin-tools/validation/validator"
 	"github.com/gin-gonic/gin"
 	"github.com/techcampman/twitter-d-server/constant"
+	"github.com/techcampman/twitter-d-server/entity"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -35,6 +38,34 @@ func GetObjectIDParam(c *gin.Context, name string) (id bson.ObjectId) {
 
 	if v := c.Request.FormValue(name); v != "" && bson.IsObjectIdHex(v) {
 		id = bson.ObjectIdHex(v)
+	}
+
+	return
+}
+
+// GetPoppoHeader ... get beaut header
+func GetPoppoHeader(c *gin.Context) *entity.PoppoHeader {
+	h := c.Request.Header
+	return &entity.PoppoHeader{
+		SessionID:  h.Get(constant.XPoppoSessionID),
+		CSRFToken:  h.Get(constant.XPoppoCSRFToken),
+		AppVersion: h.Get(constant.XPoppoAppVersion),
+	}
+}
+
+// GetLoginUserID gets login userId from session
+func GetLoginUserID(c *gin.Context) (userID bson.ObjectId, err error) {
+
+	v, exists := c.Get(constant.LoginUserKey)
+	if !exists {
+		err = fmt.Errorf("not found in gin.Context. key = %s", constant.LoginUserKey)
+		return
+	}
+
+	var ok bool
+	userID, ok = v.(bson.ObjectId)
+	if !ok || !userID.Valid() {
+		err = fmt.Errorf("not bson.ObjectId type, value = %v", v)
 	}
 
 	return
