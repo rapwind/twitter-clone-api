@@ -6,16 +6,17 @@ import (
 )
 
 var (
-	// V1PostSessionDocument ... json schema for PSOT /v1/sessions
-	V1PostSessionDocument *gojsonschema.Schema
+	// V1PostUserDocument ... json schema for POST /v1/users
+	V1PostUserDocument *gojsonschema.Schema
 
 	//
 	// schema definitions
 	//
 
-	v1PostSessionSchema = map[string]interface{}{
+	v1PostUserSchema = map[string]interface{}{
 		"type": "object",
 		"properties": map[string]interface{}{
+			"name":         name,
 			"screenName":   screenName,
 			"passwordHash": passwordHash,
 		},
@@ -24,10 +25,10 @@ var (
 	}
 )
 
-func initSessionSchema() {
+func initUserSchema() {
 
 	var err error
-	V1PostSessionDocument, err = gojsonschema.NewSchema(gojsonschema.NewGoLoader(v1PostSessionSchema))
+	V1PostUserDocument, err = gojsonschema.NewSchema(gojsonschema.NewGoLoader(v1PostUserSchema))
 	env.AssertErrForInit(err)
 
 	return

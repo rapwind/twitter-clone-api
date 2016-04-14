@@ -23,6 +23,8 @@ func AddV1Endpoints(r *gin.Engine) {
 		}
 		users := v1.Group("/users")
 		{
+			users.POST("/", registerUser)
+
 			// users.Use(middleware.CheckSession())
 			users.GET("/:"+constant.IDKey, getUser)
 			users.GET("/:"+constant.IDKey+"/following", getFollowing)

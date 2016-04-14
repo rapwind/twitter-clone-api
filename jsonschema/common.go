@@ -13,9 +13,15 @@ var (
 		"maxLength": 64.0,
 	}
 
-	screenName = map[string]interface{}{
+	name = map[string]interface{}{
 		"type":      "string",
 		"minLength": 1.0,
+		"maxLength": 20.0,
+	}
+
+	screenName = map[string]interface{}{
+		"type":      "string",
+		"minLength": 4.0,
 		"maxLength": 15.0,
 	}
 
