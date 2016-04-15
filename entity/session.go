@@ -17,7 +17,7 @@ type (
 
 	// SessionRequest ... structure of a session request
 	SessionRequest struct {
-		ScreenName   string `json:"screenName"`
+		AccountName  string `json:"accountName"`
 		PasswordHash string `json:"passwordHash"`
 	}
 )

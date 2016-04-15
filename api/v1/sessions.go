@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"regexp"
+
 	"github.com/gin-gonic/gin"
 	"github.com/techcampman/twitter-d-server/constant"
 	"github.com/techcampman/twitter-d-server/db/collection"
@@ -13,10 +15,11 @@ import (
 	"github.com/techcampman/twitter-d-server/errors"
 	"github.com/techcampman/twitter-d-server/jsonschema"
 	"github.com/techcampman/twitter-d-server/middleware"
+	"github.com/techcampman/twitter-d-server/utils"
 	"gopkg.in/mgo.v2/bson"
 )
 
-func signin(c *gin.Context) {
+func signIn(c *gin.Context) {
 
 	// validate request
 	installationID := c.Request.Header.Get(constant.XPoppoInstallationID)
@@ -52,8 +55,10 @@ func signin(c *gin.Context) {
 	}
 	defer users.Close()
 
+	q := createSignInQueryFromRequest(req)
+	fmt.Println(q)
 	u := new(entity.User)
-	err = users.Find(bson.M{"screenName": req.ScreenName, "passwordHash": req.PasswordHash}).One(u)
+	err = users.Find(q).One(u)
 	if err != nil {
 		errors.Send(c, errors.Unauthorized())
 		return
@@ -67,7 +72,7 @@ func signin(c *gin.Context) {
 	c.JSON(http.StatusOK, u)
 }
 
-func signout(c *gin.Context) {
+func signOut(c *gin.Context) {
 	// delete auth data from user account
 	if err := middleware.DelSession(c); err != nil {
 		errors.Send(c, fmt.Errorf("failed to logout a user"))
@@ -75,4 +80,24 @@ func signout(c *gin.Context) {
 	}
 
 	c.AbortWithStatus(http.StatusNoContent)
+}
+
+func createSignInQueryFromRequest(req *entity.SessionRequest) (q bson.M) {
+	emailRegexp := regexp.MustCompile(`[\w.\-]+@[\w\-]+\.[\w.\-]+`)
+	if emailRegexp.MatchString(req.AccountName) {
+		// if email
+		q = bson.M{"email": req.AccountName, "passwordHash": req.PasswordHash}
+		return
+	}
+
+	phoneRegexp := regexp.MustCompile(`^[\d]+$`)
+	numberStr := utils.PhoneNumberNormalization(req.AccountName)
+	if phoneRegexp.MatchString(numberStr) {
+		// if phoneNumber
+		q = bson.M{"phoneNumber": numberStr, "passwordHash": req.PasswordHash}
+		return
+	}
+	// if screenName
+	q = bson.M{"screenName": req.AccountName, "passwordHash": req.PasswordHash}
+	return
 }

@@ -15,6 +15,8 @@ type (
 		ID                        bson.ObjectId `json:"id"                                  bson:"_id"                                 validate:"objectId"`
 		Name                      string        `json:"name"                                bson:"name"                                validate:"min=1"`
 		ScreenName                string        `json:"screenName"                          bson:"screenName"                          validate:"min=1"`
+		Email                     string        `json:"-"                                   bson:"email"                               validate:"min=1"`
+		PhoneNumber               string        `json:"-"                                   bson:"phoneNumber"                         validate:"min=1"`
 		PasswordHash              string        `json:"-"                                   bson:"passwordHash"                        validate:"min=1"`
 		ProfileImageURL           string        `json:"profileImageUrl,omitempty"           bson:"profileImageUrl,omitempty"`
 		ProfileBackgroundImageURL string        `json:"profileBackgroundImageUrl,omitempty" bson:"profileBackgroundImageUrl,omitempty"`
@@ -40,6 +42,8 @@ type (
 	UserRegisterRequest struct {
 		Name         string `json:"name"         bson:"name"         validate:"min=1"`
 		ScreenName   string `json:"screenName"   bson:"screenName"   validate:"min=1"`
+		PhoneNumber  string `json:"phoneNumber"  bson:"phoneNumber"  validate:"min=1"`
+		Email        string `json:"email"        bson:"email"        validate:"min=1"`
 		PasswordHash string `json:"passwordHash" bson:"passwordHash" validate:"min=1"`
 	}
 )
@@ -54,6 +58,15 @@ func initUsersCollection() {
 
 	err = users.EnsureIndex(mgo.Index{
 		Key:        []string{"screenName"},
+		Unique:     true,
+		DropDups:   false,
+		Background: true,
+		Sparse:     true,
+	})
+	env.AssertErrForInit(err)
+
+	err = users.EnsureIndex(mgo.Index{
+		Key:        []string{"phoneNumber"},
 		Unique:     true,
 		DropDups:   false,
 		Background: true,
