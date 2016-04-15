@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"regexp"
 	"strings"
 )
 
@@ -14,7 +15,10 @@ func StringTrimFromMap(str string, qs []string) string {
 
 // PhoneNumberNormalization get normalization phone number from string
 func PhoneNumberNormalization(phoneNumber string) string {
-	// TODO
-	qs := []string{" ", "+", "-", "(", ")"}
-	return StringTrimFromMap(phoneNumber, qs)
+	qs := []string{" ", "-", "(", ")"}
+	phoneNumber = StringTrimFromMap(phoneNumber, qs)
+	jpPhoneExtRegexp := regexp.MustCompile(`(^[\+]810)|(^0)`)
+	phoneNumber = jpPhoneExtRegexp.ReplaceAllString(phoneNumber, "81")
+
+	return phoneNumber
 }

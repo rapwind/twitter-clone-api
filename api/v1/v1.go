@@ -18,8 +18,8 @@ func AddV1Endpoints(r *gin.Engine) {
 
 		session := v1.Group("/sessions")
 		{
-			session.POST("/", signin)
-			session.DELETE("/", signout)
+			session.POST("/", signIn)
+			session.DELETE("/", signOut)
 		}
 		users := v1.Group("/users")
 		{

@@ -22,7 +22,7 @@ var (
 	phoneNumber = map[string]interface{}{
 		"type":      "string",
 		"minLength": 10.0,
-		"maxLength": 15.0,
+		"maxLength": 20.0,
 	}
 
 	email = map[string]interface{}{

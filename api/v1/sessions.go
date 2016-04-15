@@ -19,7 +19,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func signin(c *gin.Context) {
+func signIn(c *gin.Context) {
 
 	// validate request
 	installationID := c.Request.Header.Get(constant.XPoppoInstallationID)
@@ -72,7 +72,7 @@ func signin(c *gin.Context) {
 	c.JSON(http.StatusOK, u)
 }
 
-func signout(c *gin.Context) {
+func signOut(c *gin.Context) {
 	// delete auth data from user account
 	if err := middleware.DelSession(c); err != nil {
 		errors.Send(c, fmt.Errorf("failed to logout a user"))
