@@ -16,14 +16,19 @@ func CreateSession(s *entity.Session) (err error) {
 		return fmt.Errorf("already objectId, oid = %s", s.ID)
 	}
 
-	s.ID = bson.NewObjectId()
-	s.CreatedAt = s.ID.Time()
-
 	sessions, err := collection.Sessions()
 	if err != nil {
 		return
 	}
 	defer sessions.Close()
+
+	err = sessions.Find(bson.M{"userId": s.UserID, "installationId": s.InstallationID}).One(s)
+	if s.ID != "" {
+		RemoveSessionByID(s.ID)
+	}
+
+	s.ID = bson.NewObjectId()
+	s.CreatedAt = s.ID.Time()
 
 	err = sessions.Insert(s)
 	if err != nil && !mgo.IsDup(err) {

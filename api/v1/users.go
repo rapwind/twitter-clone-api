@@ -35,10 +35,16 @@ func registerUser(c *gin.Context) {
 		errors.Send(c, errors.BadParams("body", fmt.Sprint(b)))
 		return
 	}
+	if ur.PhoneNumber == "" && ur.Email == "" {
+		errors.Send(c, errors.BadParams("phoneNumber, email", "empty"))
+		return
+	}
 
 	u := new(entity.User)
 	u.Name = ur.Name
 	u.ScreenName = ur.ScreenName
+	u.Email = ur.Email
+	u.PhoneNumber = utils.PhoneNumberNormalization(ur.PhoneNumber)
 	u.PasswordHash = ur.PasswordHash
 
 	// create user account

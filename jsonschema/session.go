@@ -16,11 +16,11 @@ var (
 	v1PostSessionSchema = map[string]interface{}{
 		"type": "object",
 		"properties": map[string]interface{}{
-			"screenName":   screenName,
+			"accountName":  accountName,
 			"passwordHash": passwordHash,
 		},
 		"additionalProperties": false,
-		"required":             []interface{}{"screenName", "passwordHash"},
+		"required":             []interface{}{"passwordHash"},
 	}
 )
 

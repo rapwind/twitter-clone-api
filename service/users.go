@@ -3,9 +3,11 @@ package service
 import (
 	"fmt"
 
+	"github.com/techcampman/twitter-d-server/constant"
 	"github.com/techcampman/twitter-d-server/db/collection"
 	"github.com/techcampman/twitter-d-server/entity"
 	"github.com/techcampman/twitter-d-server/logger"
+	"github.com/techcampman/twitter-d-server/utils"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -20,8 +22,8 @@ func CreateUser(u *entity.User) (err error) {
 	u.CreatedAt = u.ID.Time()
 	u.UpdatedAt = u.ID.Time()
 
-	if u.Name == "" {
-		u.Name = u.ScreenName
+	if u.ScreenName == "" {
+		u.ScreenName = utils.RandString(constant.DefaultScreenNameSize)
 	}
 
 	users, err := collection.Users()

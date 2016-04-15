@@ -8,6 +8,9 @@ const (
 	// DefaultLimitGetTweets for the number of tweets to be got
 	DefaultLimitGetTweets = 10
 
+	// DefaultScreenNameSize for a user screen name
+	DefaultScreenNameSize = 15
+
 	// ImageMaxSize for a storage
 	ImageMaxSize = 2097152
 )

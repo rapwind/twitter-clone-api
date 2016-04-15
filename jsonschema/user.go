@@ -17,11 +17,13 @@ var (
 		"type": "object",
 		"properties": map[string]interface{}{
 			"name":         name,
+			"phoneNumber":  phoneNumber,
+			"email":        email,
 			"screenName":   screenName,
 			"passwordHash": passwordHash,
 		},
 		"additionalProperties": false,
-		"required":             []interface{}{"screenName", "passwordHash"},
+		"required":             []interface{}{"name", "passwordHash"},
 	}
 )
 
