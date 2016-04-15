@@ -26,10 +26,8 @@ var (
 	}
 
 	email = map[string]interface{}{
-		"type":      "string",
-		"format":    "email",
-		"minLength": 4.0,
-		"maxLength": 256.0,
+		"type":   "string",
+		"format": "email",
 	}
 
 	screenName = map[string]interface{}{
@@ -48,5 +46,16 @@ var (
 		"type":      "string",
 		"minLength": 1.0,
 		"maxLength": 64.0,
+	}
+
+	text = map[string]interface{}{
+		"type":      "string",
+		"minLength": 1.0,
+		"maxLength": 140.0,
+	}
+
+	contentURL = map[string]interface{}{
+		"type":   "string",
+		"format": "uri",
 	}
 )

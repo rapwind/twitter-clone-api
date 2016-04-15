@@ -4,4 +4,5 @@ func init() {
 	initInstallationSchema()
 	initSessionSchema()
 	initUserSchema()
+	initTweetSchema()
 }

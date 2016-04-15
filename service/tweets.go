@@ -1,10 +1,54 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/techcampman/twitter-d-server/db/collection"
 	"github.com/techcampman/twitter-d-server/entity"
+	"github.com/techcampman/twitter-d-server/logger"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
+
+// CreateTweet creates "entity.Tweet" data
+func CreateTweet(t *entity.Tweet) (err error) {
+	if t.ID != "" {
+		return fmt.Errorf("already objectId, oid = %s", t.ID)
+	}
+
+	t.ID = bson.NewObjectId()
+	t.CreatedAt = t.ID.Time()
+
+	tweets, err := collection.Tweets()
+	if err != nil {
+		return
+	}
+	defer tweets.Close()
+
+	err = tweets.Insert(t)
+	if err != nil && !mgo.IsDup(err) {
+		logger.Error(err)
+	}
+
+	return
+}
+
+// RemoveTweet deletes a document on tweets collection
+func RemoveTweet(t *entity.Tweet) (err error) {
+	tweets, err := collection.Tweets()
+	if err != nil {
+		logger.Error(err)
+		return err
+	}
+	defer tweets.Close()
+
+	err = tweets.RemoveId(t.ID)
+	if err != nil && err != mgo.ErrNotFound {
+		logger.Error(err)
+	}
+
+	return
+}
 
 // ReadTweetDetails returns an array of TweetDetail(s)
 func ReadTweetDetails(limit int, maxID bson.ObjectId, userID bson.ObjectId, following bool, q string) (tds []entity.TweetDetail, err error) {

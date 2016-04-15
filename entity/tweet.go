@@ -11,6 +11,7 @@ type (
 	Tweet struct {
 		ID               bson.ObjectId `json:"id"                         bson:"_id"                        validate:"objectId"`
 		Text             string        `json:"text"                       bson:"text"                       validate:"min=1"`
+		ContentURL       string        `json:"contentUrl,omitempty"       bson:"contentUrl,omitempty"       validate:"min=1"`
 		UserID           bson.ObjectId `json:"-"                          bson:"userId"                     validate:"objectId"`
 		InReplyToTweetID bson.ObjectId `json:"inReplyToTweetId,omitempty" bson:"inReplyToTweetId,omitempty" validate:"objectId"`
 		CreatedAt        time.Time     `json:"createdAt"                  bson:"createdAt"`
