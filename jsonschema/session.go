@@ -20,7 +20,7 @@ var (
 			"passwordHash": passwordHash,
 		},
 		"additionalProperties": false,
-		"required":             []interface{}{"passwordHash"},
+		"required":             []interface{}{"accountName", "passwordHash"},
 	}
 )
 
