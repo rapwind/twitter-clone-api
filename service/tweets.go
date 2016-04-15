@@ -33,6 +33,23 @@ func CreateTweet(t *entity.Tweet) (err error) {
 	return
 }
 
+// RemoveTweet deletes a document on tweets collection
+func RemoveTweet(t *entity.Tweet) (err error) {
+	tweets, err := collection.Tweets()
+	if err != nil {
+		logger.Error(err)
+		return err
+	}
+	defer tweets.Close()
+
+	err = tweets.RemoveId(t.ID)
+	if err != nil && err != mgo.ErrNotFound {
+		logger.Error(err)
+	}
+
+	return
+}
+
 // ReadTweetDetails returns an array of TweetDetail(s)
 func ReadTweetDetails(limit int, maxID bson.ObjectId, userID bson.ObjectId, following bool, q string) (tds []entity.TweetDetail, err error) {
 	ts, err := readTweets(limit, maxID, userID, following, q)

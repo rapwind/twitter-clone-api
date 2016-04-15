@@ -50,6 +50,15 @@ func Unauthorized() *ResponseError {
 	}
 }
 
+// Forbidden is caused when has bad permissions
+func Forbidden() *ResponseError {
+	return &ResponseError{
+		Status:  http.StatusForbidden,
+		Code:    "forbidden",
+		Message: "bad permissions",
+	}
+}
+
 // Send is reply error
 // if err is ...
 // 	*ResponseError, responds err.Status

@@ -55,6 +55,39 @@ func createTweet(c *gin.Context) {
 	c.JSON(http.StatusOK, t)
 }
 
+func deleteTweet(c *gin.Context) {
+	// get session
+	uid, err := utils.GetLoginUserID(c)
+	if err != nil {
+		errors.Send(c, fmt.Errorf("failed to get a login user"))
+		return
+	}
+
+	// check tweet
+	id := utils.GetObjectIDPath(c, constant.IDKey)
+	t, err := service.ReadTweetByID(id)
+	if err != nil {
+		errors.Send(c, errors.NotFound())
+		return
+	}
+	if t.UserID != uid {
+		errors.Send(c, errors.Forbidden())
+		return
+	}
+
+	// delete tweet
+	if err := service.RemoveTweet(t); err != nil {
+		if errors.IsDataNotFound(err) {
+			errors.Send(c, errors.NotFound())
+		} else {
+			errors.Send(c, fmt.Errorf("failed to delete a tweet"))
+		}
+		return
+	}
+
+	c.AbortWithStatus(http.StatusNoContent)
+}
+
 func getTweets(c *gin.Context) {
 	_, limit := utils.GetRangeParams(c, constant.DefaultLimitGetTweets)
 	maxID := utils.GetObjectIDParam(c, "maxId")
