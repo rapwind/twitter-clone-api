@@ -81,30 +81,21 @@ func readTweets(limit int, maxID bson.ObjectId, userID bson.ObjectId, following 
 		m = append(m, bson.M{"text": bson.RegEx{Pattern: q, Options: "i"}})
 	}
 
-	// if userId is set:
-	if userID.Valid() {
-		// if following is set:
-		if following {
-			// Following users' tweets are shown.
-			flws := []entity.Follow{}
-			flws, err = ReadFollowingByID(userID, 0, -1)
-			if err != nil {
-				return
-			}
+	// if following is set:
+	if userID.Valid() && following {
+		flws := []entity.Follow{}
+		flws, err = ReadFollowingByID(userID, 0, -1)
+		if err != nil {
+			return
+		}
 
-			// Convert an array of Follow(s) into an array of user IDs
-			if len(flws) != 0 {
-				n := len(flws)
-				ids := make([]bson.ObjectId, n+1)
-				for i, v := range flws {
-					ids[i] = v.TargetID
-				}
-				ids[n] = userID
-				m = append(m, bson.M{"userId": bson.M{"$in": ids}})
+		// Convert an array of Follow(s) into an array of user IDs
+		if len(flws) != 0 {
+			ids := make([]bson.ObjectId, len(flws))
+			for i, v := range flws {
+				ids[i] = v.TargetID
 			}
-		} else {
-			// Following users' tweets are not shown.
-			m = append(m, bson.M{"userId": userID})
+			m = append(m, bson.M{"userId": bson.M{"$in": ids}})
 		}
 	}
 
