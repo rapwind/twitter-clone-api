@@ -108,9 +108,10 @@ func getTweets(c *gin.Context) {
 }
 
 func getTweet(c *gin.Context) {
-	id := utils.GetObjectIDPath(c, constant.IDKey)
+	loginUserID, _ := utils.GetLoginUserID(c)
+	userID := utils.GetObjectIDPath(c, constant.IDKey)
 
-	td, err := service.ReadTweetDetailByID(id)
+	td, err := service.ReadTweetDetailByID(userID, loginUserID)
 	if err != nil {
 		errors.Send(c, err)
 		return
