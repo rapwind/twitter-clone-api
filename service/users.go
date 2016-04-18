@@ -3,6 +3,8 @@ package service
 import (
 	"fmt"
 
+	"sync"
+
 	"github.com/techcampman/twitter-d-server/constant"
 	"github.com/techcampman/twitter-d-server/db/collection"
 	"github.com/techcampman/twitter-d-server/entity"
@@ -58,7 +60,13 @@ func ReadUserDetailByID(id bson.ObjectId) (ud *entity.UserDetail, err error) {
 		return
 	}
 
-	ud = &entity.UserDetail{u, tweetsCount, likesCount, followerCount, followingCount, nil}
+	ud = &entity.UserDetail{
+		User:           u,
+		TweetsCount:    tweetsCount,
+		LikesCount:     likesCount,
+		FollowerCount:  followerCount,
+		FollowingCount: followingCount,
+	}
 	return
 }
 
@@ -123,18 +131,65 @@ func ReadFollowerByID(id bson.ObjectId, offset int, limit int) (flws []entity.Fo
 
 // ReadFollowsCountsByID gets entity.UserDetail.FollowingCount and FollowerCount
 func ReadFollowsCountsByID(id bson.ObjectId) (followingCount int, followerCount int, err error) {
-	follows, err := collection.Follows()
-	if err != nil {
-		return
-	}
-	defer follows.Close()
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-	followingCount, err = follows.Find(bson.M{"userId": id}).Count()
-	if err != nil {
-		return
+	finChan := make(chan bool)
+	errChan := make(chan error)
+	followingCountChan := make(chan int)
+	followerCountChan := make(chan int)
+
+	go func() {
+		wg.Wait()
+		finChan <- true
+	}()
+
+	go func(id bson.ObjectId) {
+		defer wg.Done()
+
+		follows, err := collection.Follows()
+		if err != nil {
+			return
+		}
+		defer follows.Close()
+
+		c, err := follows.Find(bson.M{"userId": id}).Count()
+		if err != nil {
+			return
+		}
+		followingCountChan <- c
+	}(id)
+
+	go func(id bson.ObjectId) {
+		defer wg.Done()
+
+		follows, err := collection.Follows()
+		if err != nil {
+			errChan <- err
+			return
+		}
+		defer follows.Close()
+
+		c, err := follows.Find(bson.M{"targetId": id}).Count()
+		if err != nil {
+			errChan <- err
+			return
+		}
+		followerCountChan <- c
+	}(id)
+
+LOOP:
+	for {
+		select {
+		case <-finChan:
+			break LOOP
+		case err = <-errChan:
+			return
+		case followingCount = <-followingCountChan:
+		case followerCount = <-followerCountChan:
+		}
 	}
 
-	followerCount, err = follows.Find(bson.M{"targetId": id}).Count()
 	return
 }
 

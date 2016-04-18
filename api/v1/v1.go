@@ -49,12 +49,15 @@ func AddV1Endpoints(r *gin.Engine) {
 		{
 			tweets.Use(middleware.SetLoginUserIDIfNotEmpty())
 			tweets.GET("", getTweets)
+			tweets.POST("", createTweet)
 
-			tweets.Use(validation.ValidatePathParam(constant.IDKey, validator.ObjectID{}))
+			tweets.Use(
+				validation.ValidatePathParam(constant.IDKey, validator.ObjectID{}),
+				middleware.SetTweetOnContext(constant.IDKey),
+			)
 			tweets.GET("/:"+constant.IDKey, getTweet)
 
 			tweets.Use(middleware.CheckSession())
-			tweets.POST("", createTweet)
 			tweets.DELETE("/:"+constant.IDKey, deleteTweet)
 		}
 		images := v1.Group("/images")

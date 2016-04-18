@@ -15,6 +15,7 @@ import (
 	"github.com/techcampman/twitter-d-server/jsonschema"
 	"github.com/techcampman/twitter-d-server/service"
 	"github.com/techcampman/twitter-d-server/utils"
+	"gopkg.in/mgo.v2/bson"
 )
 
 func createTweet(c *gin.Context) {
@@ -40,7 +41,7 @@ func createTweet(c *gin.Context) {
 	// get session
 	uid, err := utils.GetLoginUserID(c)
 	if err != nil {
-		errors.Send(c, fmt.Errorf("failed to get a login user"))
+		errors.Send(c, errors.Unauthorized())
 		return
 	}
 
@@ -56,16 +57,11 @@ func createTweet(c *gin.Context) {
 }
 
 func deleteTweet(c *gin.Context) {
-	// get session
-	uid, err := utils.GetLoginUserID(c)
-	if err != nil {
-		errors.Send(c, fmt.Errorf("failed to get a login user"))
-		return
-	}
+	// get params
+	uid, t := getLoginUserIDAndTargetTweet(c)
 
 	// check tweet
-	id := utils.GetObjectIDPath(c, constant.IDKey)
-	t, err := service.ReadTweetByID(id)
+	t, err := service.ReadTweetByID(t.ID)
 	if err != nil {
 		errors.Send(c, errors.NotFound())
 		return
@@ -108,13 +104,19 @@ func getTweets(c *gin.Context) {
 }
 
 func getTweet(c *gin.Context) {
-	id := utils.GetObjectIDPath(c, constant.IDKey)
+	_, t := getLoginUserIDAndTargetTweet(c)
 
-	td, err := service.ReadTweetDetailByID(id)
+	td, err := service.ReadTweetDetailByID(t.ID)
 	if err != nil {
 		errors.Send(c, err)
 		return
 	}
 
 	c.JSON(http.StatusOK, td)
+}
+
+func getLoginUserIDAndTargetTweet(c *gin.Context) (loginUserID bson.ObjectId, param *entity.Tweet) {
+	loginUserID, _ = utils.GetLoginUserID(c)
+	param, _ = utils.GetTargetTweet(c)
+	return
 }

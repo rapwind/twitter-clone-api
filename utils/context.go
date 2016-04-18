@@ -86,3 +86,19 @@ func GetTargetUser(c *gin.Context) (u *entity.User, err error) {
 func SetTargetUser(c *gin.Context, u *entity.User) {
 	c.Set(constant.TargetUserKey, u)
 }
+
+// GetTargetTweet ... get target tweet from session
+func GetTargetTweet(c *gin.Context) (t *entity.Tweet, err error) {
+	i, exists := c.Get(constant.TargetTweetKey)
+	if !exists {
+		err = fmt.Errorf("not found in gin.Context. key = %s", constant.TargetTweetKey)
+		return
+	}
+	t = i.(*entity.Tweet)
+	return
+}
+
+// SetTargetTweet ... set tweet on session
+func SetTargetTweet(c *gin.Context, t *entity.Tweet) {
+	c.Set(constant.TargetTweetKey, t)
+}

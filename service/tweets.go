@@ -3,6 +3,8 @@ package service
 import (
 	"fmt"
 
+	"sync"
+
 	"github.com/techcampman/twitter-d-server/db/collection"
 	"github.com/techcampman/twitter-d-server/entity"
 	"github.com/techcampman/twitter-d-server/logger"
@@ -51,7 +53,7 @@ func RemoveTweet(t *entity.Tweet) (err error) {
 }
 
 // ReadUserTweetDetails returns an array of TweetDetail(s) posted by a given user.
-func ReadUserTweetDetails(userID bson.ObjectId, limit int, maxID bson.ObjectId) (tds []entity.TweetDetail, err error) {
+func ReadUserTweetDetails(userID bson.ObjectId, limit int, maxID bson.ObjectId) (tds []*entity.TweetDetail, err error) {
 	m := []bson.M{
 		bson.M{"userId": userID},
 		bson.M{"deletedAt": bson.M{"$exists": false}},
@@ -67,7 +69,7 @@ func ReadUserTweetDetails(userID bson.ObjectId, limit int, maxID bson.ObjectId) 
 }
 
 // ReadTweetDetails returns an array of TweetDetail(s)
-func ReadTweetDetails(limit int, maxID bson.ObjectId, userID bson.ObjectId, following bool, q string) (tds []entity.TweetDetail, err error) {
+func ReadTweetDetails(limit int, maxID bson.ObjectId, userID bson.ObjectId, following bool, q string) (tds []*entity.TweetDetail, err error) {
 	m := []bson.M{
 		bson.M{"deletedAt": bson.M{"$exists": false}},
 	}
@@ -115,7 +117,7 @@ func ReadTweetDetailByID(id bson.ObjectId) (td *entity.TweetDetail, err error) {
 	return
 }
 
-func readSortedTweetDetails(m bson.M, limit int) (tds []entity.TweetDetail, err error) {
+func readSortedTweetDetails(m bson.M, limit int) (tds []*entity.TweetDetail, err error) {
 	tweets, err := collection.Tweets()
 	if err != nil {
 		return
@@ -132,16 +134,52 @@ func readSortedTweetDetails(m bson.M, limit int) (tds []entity.TweetDetail, err 
 	return
 }
 
-func readTweetsDetailByTweets(ts []entity.Tweet) (tds []entity.TweetDetail, err error) {
-	tds = make([]entity.TweetDetail, len(ts))
-	tdp := (*entity.TweetDetail)(nil)
-	for i, t := range ts {
-		tdp, err = readTweetDetailByTweet(t)
-		if err != nil {
-			return
-		}
-		tds[i] = *tdp
+func readTweetsDetailByTweets(ts []entity.Tweet) (tds []*entity.TweetDetail, err error) {
+
+	var wg sync.WaitGroup
+
+	finChan := make(chan bool)
+	tweetsChan := make(chan *entity.TweetDetail, len(ts))
+
+	wg.Add(len(ts))
+	go func() {
+		wg.Wait()
+		finChan <- true
+	}()
+
+	for _, t := range ts {
+		go func(t entity.Tweet) {
+			defer wg.Done()
+
+			td := new(entity.TweetDetail)
+			td, err = readTweetDetailByTweet(t)
+			if err != nil {
+				if err != mgo.ErrNotFound {
+					logger.Error(err)
+				}
+				return
+			}
+			td.TargetFunc = func() int64 { return td.CreatedAt.Unix() }
+			td.PriorityFunc = func() string { return td.ID.Hex() }
+
+			tweetsChan <- td
+		}(t)
 	}
+	s := &entity.SortedSlice{DESC: true}
+LOOP:
+	for {
+		select {
+		case <-finChan:
+			break LOOP
+		case pd := <-tweetsChan:
+			s.Add(pd)
+		}
+	}
+
+	for _, i := range s.S {
+		tds = append(tds, i.(*entity.TweetDetail))
+	}
+
 	return
 }
 
@@ -159,7 +197,7 @@ func readTweetDetailByTweet(t entity.Tweet) (td *entity.TweetDetail, err error) 
 		}
 	}
 
-	td = &entity.TweetDetail{tdwr, inReplyToTweet}
+	td = &entity.TweetDetail{TweetDetailWithoutReply: tdwr, InReplyToTweet: inReplyToTweet}
 	return
 }
 
@@ -200,23 +238,66 @@ func ReadTweetByID(id bson.ObjectId) (t *entity.Tweet, err error) {
 
 // ReadTweetsCountsByUser gets entity.UserDetail.TweetsCount and LikesCount
 func ReadTweetsCountsByUser(u entity.User) (tweetsCount int, likesCount int, err error) {
-	tweets, err := collection.Tweets()
-	if err != nil {
-		return
-	}
-	defer tweets.Close()
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-	tweetsCount, err = tweets.Find(bson.M{"userId": u.ID}).Count()
-	if err != nil {
-		return
+	finChan := make(chan bool)
+	errChan := make(chan error)
+	tweetsCountChan := make(chan int)
+	likesCountChan := make(chan int)
+
+	go func() {
+		wg.Wait()
+		finChan <- true
+	}()
+
+	go func(id bson.ObjectId) {
+		defer wg.Done()
+
+		tweets, err := collection.Tweets()
+		if err != nil {
+			errChan <- err
+			return
+		}
+		defer tweets.Close()
+
+		c, err := tweets.Find(bson.M{"userId": id}).Count()
+		if err != nil {
+			errChan <- err
+			return
+		}
+		tweetsCountChan <- c
+	}(u.ID)
+
+	go func(id bson.ObjectId) {
+		defer wg.Done()
+
+		likes, err := collection.Likes()
+		if err != nil {
+			errChan <- err
+			return
+		}
+		defer likes.Close()
+
+		c, err := likes.Find(bson.M{"userId": u.ID}).Count()
+		if err != nil {
+			errChan <- err
+			return
+		}
+		likesCountChan <- c
+	}(u.ID)
+
+LOOP:
+	for {
+		select {
+		case <-finChan:
+			break LOOP
+		case err = <-errChan:
+			return
+		case tweetsCount = <-tweetsCountChan:
+		case likesCount = <-likesCountChan:
+		}
 	}
 
-	likes, err := collection.Likes()
-	if err != nil {
-		return
-	}
-	defer likes.Close()
-
-	likesCount, err = likes.Find(bson.M{"userId": u.ID}).Count()
 	return
 }

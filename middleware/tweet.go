@@ -12,22 +12,22 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-// SetUserOnContext middleware for *gin.Context
-func SetUserOnContext(param string) gin.HandlerFunc {
+// SetTweetOnContext middleware for *gin.Context
+func SetTweetOnContext(param string) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 
-		uid := bson.ObjectIdHex(c.Params.ByName(param))
-		u, err := service.ReadUserByID(uid)
+		tid := bson.ObjectIdHex(c.Params.ByName(param))
+		t, err := service.ReadTweetByID(tid)
 		if err != nil {
 			if err == mgo.ErrNotFound {
 				errors.Send(c, errors.NotFound())
 			} else {
 				logger.Error(err)
-				errors.Send(c, fmt.Errorf("failed to get a user"))
+				errors.Send(c, fmt.Errorf("failed to get a tweet"))
 			}
 			return
 		}
-		utils.SetTargetUser(c, u)
+		utils.SetTargetTweet(c, t)
 	}
 }
