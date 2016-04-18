@@ -1,22 +1,23 @@
 package entity
 
 import (
-	"gopkg.in/mgo.v2/bson"
 	"time"
+
 	"github.com/techcampman/twitter-d-server/db/collection"
 	"github.com/techcampman/twitter-d-server/env"
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type (
 
+	// Like ... structure of a like
 	Like struct {
 		ID        bson.ObjectId `json:"-"       bson:"_id"     validate:"objectId"`
 		UserID    bson.ObjectId `json:"userId"  bson:"userId"  validate:"objectId"`
 		TweetID   bson.ObjectId `json:"tweetId" bson:"tweetId" validate:"objectId"`
 		CreatedAt time.Time     `json:"-"       bson:"createdAt"`
 	}
-
 )
 
 func initLikesCollection() {

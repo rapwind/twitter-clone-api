@@ -211,6 +211,12 @@ func ReadTweetsCountsByUser(u entity.User) (tweetsCount int, likesCount int, err
 		return
 	}
 
-	likesCount = 0 // TODO: obtain likesCount!
+	likes, err := collection.Likes()
+	if err != nil {
+		return
+	}
+	defer likes.Close()
+
+	likesCount, err = likes.Find(bson.M{"userId": u.ID}).Count()
 	return
 }
