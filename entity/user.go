@@ -36,6 +36,9 @@ type (
 		FollowerCount  int   `json:"followerCount"`
 		FollowingCount int   `json:"followingCount"`
 		Following      *bool `json:"following,omitempty"`
+
+		TargetFunc   func() int64  `json:"-"`
+		PriorityFunc func() string `json:"-"`
 	}
 
 	// UserRegisterRequest ... structure of a user register request
@@ -47,6 +50,16 @@ type (
 		PasswordHash string `json:"passwordHash" bson:"passwordHash" validate:"min=1"`
 	}
 )
+
+// Target from Searcher interface
+func (ud *UserDetail) Target() int64 {
+	return ud.TargetFunc()
+}
+
+// Priority from Searcher interface
+func (ud *UserDetail) Priority() string {
+	return ud.PriorityFunc()
+}
 
 func initUsersCollection() {
 
