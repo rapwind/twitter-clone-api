@@ -7,4 +7,6 @@ const (
 	LoginUserKey = "loginUser"
 	// TargetUserKey for *gin.Context
 	TargetUserKey = "targetUserKey"
+	// TargetTweetKey for *gin.Context
+	TargetTweetKey = "targetTweetKey"
 )
