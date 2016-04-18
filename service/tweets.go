@@ -5,6 +5,7 @@ import (
 
 	"github.com/techcampman/twitter-d-server/db/collection"
 	"github.com/techcampman/twitter-d-server/entity"
+	"github.com/techcampman/twitter-d-server/errors"
 	"github.com/techcampman/twitter-d-server/logger"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -231,4 +232,80 @@ func ReadTweetsCountsByUser(u entity.User) (tweetsCount int, likesCount int, err
 
 	likesCount, err = likes.Find(bson.M{"userId": u.ID}).Count()
 	return
+}
+
+// CreateLike creates "entity.Like" data
+func CreateLike(l *entity.Like) (err error) {
+	if err := checkValidLike(l); err != nil {
+		return errors.BadParams("like", "invalid")
+	}
+
+	if checkLiked(l) {
+		err = errors.DataConflict()
+		return
+	}
+
+	l.ID = bson.NewObjectId()
+	l.CreatedAt = l.ID.Time()
+
+	likes, err := collection.Likes()
+	if err != nil {
+		logger.Error(err)
+		return err
+	}
+	defer likes.Close()
+
+	err = likes.Insert(l)
+	if err != nil {
+		logger.Error(err)
+	}
+
+	return
+}
+
+// RemoveLike deletes a document on a collection
+func RemoveLike(l *entity.Like) (err error) {
+	if err := checkValidLike(l); err != nil {
+		return errors.BadParams("like", "invalid")
+	}
+
+	likes, err := collection.Likes()
+	if err != nil {
+		logger.Error(err)
+		return err
+	}
+	defer likes.Close()
+
+	err = likes.Remove(bson.M{"userId": l.UserID, "tweetId": l.TweetID})
+	if err != nil {
+		logger.Error(err)
+	}
+
+	return
+}
+
+func checkLiked(l *entity.Like) (liked bool) {
+	follows, err := collection.Follows()
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	defer follows.Close()
+
+	n, err := follows.Find(bson.M{"userId": l.UserID, "tweetId": l.TweetID}).Count()
+	if err != nil && err != mgo.ErrNotFound {
+		logger.Error(err)
+	}
+
+	return n > 0
+}
+
+func checkValidLike(l *entity.Like) error {
+	if !l.UserID.Valid() {
+		return fmt.Errorf("invalid userId")
+	}
+	if !l.TweetID.Valid() {
+		return fmt.Errorf("invalid tweetId")
+	}
+	return nil
 }

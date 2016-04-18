@@ -56,6 +56,9 @@ func AddV1Endpoints(r *gin.Engine) {
 			tweets.Use(middleware.CheckSession())
 			tweets.POST("", createTweet)
 			tweets.DELETE("/:"+constant.IDKey, deleteTweet)
+
+			tweets.POST("/:"+constant.IDKey+"/like", doLike)
+			tweets.DELETE("/:"+constant.IDKey+"/like", undoLike)
 		}
 		images := v1.Group("/images")
 		{
