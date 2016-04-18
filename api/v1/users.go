@@ -59,7 +59,7 @@ func registerUser(c *gin.Context) {
 }
 
 func getUser(c *gin.Context) {
-	id := utils.GetObjectIDPath(c, constant.IDKey)
+	_, id := getLoginUserIDAndTargetUser(c)
 
 	ud, err := service.ReadUserDetailByID(id)
 	if err != nil {
@@ -101,7 +101,7 @@ func undoFollow(c *gin.Context) {
 }
 
 func getFollowing(c *gin.Context) {
-	id := utils.GetObjectIDPath(c, constant.IDKey)
+	_, id := getLoginUserIDAndTargetUser(c)
 	offset, limit := utils.GetRangeParams(c, constant.DefaultLimitGetFollows)
 
 	flws, err := service.ReadFollowingByID(id, offset, limit)
@@ -123,7 +123,7 @@ func getFollowing(c *gin.Context) {
 }
 
 func getFollower(c *gin.Context) {
-	id := utils.GetObjectIDPath(c, constant.IDKey)
+	_, id := getLoginUserIDAndTargetUser(c)
 	offset, limit := utils.GetRangeParams(c, constant.DefaultLimitGetFollows)
 
 	flws, err := service.ReadFollowerByID(id, offset, limit)
