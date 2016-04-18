@@ -53,6 +53,7 @@ func RemoveTweet(t *entity.Tweet) (err error) {
 	return
 }
 
+// ReadUserTweetDetails returns TweetDetails by user ID
 func ReadUserTweetDetails(userID bson.ObjectId, loginUserID bson.ObjectId, limit int, maxID bson.ObjectId) (tds []*entity.TweetDetail, err error) {
 	m := []bson.M{
 		bson.M{"userId": userID},
