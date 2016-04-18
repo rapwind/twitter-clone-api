@@ -27,7 +27,7 @@ func initLikesCollection() {
 	defer likes.Close()
 
 	err = likes.EnsureIndex(mgo.Index{
-		Key:        []string{"userId", "-_id"},
+		Key:        []string{"userId", "-createdAt"},
 		Unique:     false,
 		DropDups:   false,
 		Background: true,
@@ -36,7 +36,7 @@ func initLikesCollection() {
 	env.AssertErrForInit(err)
 
 	err = likes.EnsureIndex(mgo.Index{
-		Key:        []string{"tweetId", "-_id"},
+		Key:        []string{"tweetId", "-createdAt"},
 		Unique:     false,
 		DropDups:   false,
 		Background: true,
@@ -45,7 +45,7 @@ func initLikesCollection() {
 	env.AssertErrForInit(err)
 
 	err = likes.EnsureIndex(mgo.Index{
-		Key:        []string{"userId", "targetId"},
+		Key:        []string{"userId", "tweetId"},
 		Unique:     true,
 		DropDups:   false,
 		Background: true,

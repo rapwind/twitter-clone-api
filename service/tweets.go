@@ -123,7 +123,7 @@ func readSortedTweetDetails(m bson.M, limit int) (tds []entity.TweetDetail, err 
 	defer tweets.Close()
 
 	ts := []entity.Tweet{}
-	err = tweets.Find(m).Sort("-_id").Limit(limit).All(&ts)
+	err = tweets.Find(m).Sort("-createdAt").Limit(limit).All(&ts)
 	if err != nil {
 		return
 	}
