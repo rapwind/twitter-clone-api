@@ -119,3 +119,35 @@ func getTweet(c *gin.Context) {
 
 	c.JSON(http.StatusOK, td)
 }
+
+func doLike(c *gin.Context) {
+	loginUserID, _ := utils.GetLoginUserID(c)
+	tweetID := utils.GetObjectIDPath(c, constant.IDKey)
+
+	l := &entity.Like{
+		UserID:  loginUserID,
+		TweetID: tweetID,
+	}
+	if err := service.CreateLike(l); err != nil {
+		errors.Send(c, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, l)
+}
+
+func undoLike(c *gin.Context) {
+	loginUserID, _ := utils.GetLoginUserID(c)
+	tweetID := utils.GetObjectIDPath(c, constant.IDKey)
+
+	l := &entity.Like{
+		UserID:  loginUserID,
+		TweetID: tweetID,
+	}
+	if err := service.RemoveLike(l); err != nil {
+		errors.Send(c, err)
+		return
+	}
+
+	c.AbortWithStatus(http.StatusNoContent)
+}
