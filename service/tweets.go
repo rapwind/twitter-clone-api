@@ -123,7 +123,7 @@ func readSortedTweetDetails(m bson.M, limit int) (tds []entity.TweetDetail, err 
 	defer tweets.Close()
 
 	ts := []entity.Tweet{}
-	err = tweets.Find(m).Sort("-_id").Limit(limit).All(&ts)
+	err = tweets.Find(m).Sort("-createdAt").Limit(limit).All(&ts)
 	if err != nil {
 		return
 	}
@@ -211,6 +211,12 @@ func ReadTweetsCountsByUser(u entity.User) (tweetsCount int, likesCount int, err
 		return
 	}
 
-	likesCount = 0 // TODO: obtain likesCount!
+	likes, err := collection.Likes()
+	if err != nil {
+		return
+	}
+	defer likes.Close()
+
+	likesCount, err = likes.Find(bson.M{"userId": u.ID}).Count()
 	return
 }

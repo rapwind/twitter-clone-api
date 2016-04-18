@@ -11,6 +11,7 @@ const (
 	users         = "user"
 	follows       = "follow"
 	tweets        = "tweet"
+	likes         = "like"
 )
 
 var mdb = env.GetMongoDB()
@@ -29,3 +30,6 @@ func Follows() (c *mongo.Collection, err error) { return mdb.GetCollection(follo
 
 // Tweets return *Collection for "tweet" collection
 func Tweets() (c *mongo.Collection, err error) { return mdb.GetCollection(tweets, true) }
+
+// Likes return *Collection for "like" collection
+func Likes() (c *mongo.Collection, err error) { return mdb.GetCollection(likes, true) }
