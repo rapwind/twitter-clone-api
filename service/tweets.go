@@ -50,23 +50,24 @@ func RemoveTweet(t *entity.Tweet) (err error) {
 	return
 }
 
-// ReadTweetDetails returns an array of TweetDetail(s)
-func ReadTweetDetails(limit int, maxID bson.ObjectId, userID bson.ObjectId, following bool, q string) (tds []entity.TweetDetail, err error) {
-	ts, err := readTweets(limit, maxID, userID, following, q)
-
-	tds = make([]entity.TweetDetail, len(ts))
-	tdp := (*entity.TweetDetail)(nil)
-	for i, t := range ts {
-		tdp, err = readTweetDetailByTweet(t)
-		if err != nil {
-			return
-		}
-		tds[i] = *tdp
+// ReadUserTweetDetails returns an array of TweetDetail(s) posted by a given user.
+func ReadUserTweetDetails(userID bson.ObjectId, limit int, maxID bson.ObjectId) (tds []entity.TweetDetail, err error) {
+	m := []bson.M{
+		bson.M{"userId": userID},
+		bson.M{"deletedAt": bson.M{"$exists": false}},
 	}
+
+	// if maxId is set:
+	if maxID.Valid() {
+		m = append(m, bson.M{"_id": bson.M{"$lte": maxID}})
+	}
+
+	tds, err = readSortedTweetDetails(bson.M{"$and": m}, limit)
 	return
 }
 
-func readTweets(limit int, maxID bson.ObjectId, userID bson.ObjectId, following bool, q string) (ts []entity.Tweet, err error) {
+// ReadTweetDetails returns an array of TweetDetail(s)
+func ReadTweetDetails(limit int, maxID bson.ObjectId, userID bson.ObjectId, following bool, q string) (tds []entity.TweetDetail, err error) {
 	m := []bson.M{
 		bson.M{"deletedAt": bson.M{"$exists": false}},
 	}
@@ -81,40 +82,25 @@ func readTweets(limit int, maxID bson.ObjectId, userID bson.ObjectId, following 
 		m = append(m, bson.M{"text": bson.RegEx{Pattern: q, Options: "i"}})
 	}
 
-	// if userId is set:
-	if userID.Valid() {
-		// if following is set:
-		if following {
-			// Following users' tweets are shown.
-			flws := []entity.Follow{}
-			flws, err = ReadFollowingByID(userID, 0, -1)
-			if err != nil {
-				return
-			}
+	// if following is set:
+	if userID.Valid() && following {
+		flws := []entity.Follow{}
+		flws, err = ReadFollowingByID(userID, 0, -1)
+		if err != nil {
+			return
+		}
 
-			// Convert an array of Follow(s) into an array of user IDs
-			if len(flws) != 0 {
-				n := len(flws)
-				ids := make([]bson.ObjectId, n+1)
-				for i, v := range flws {
-					ids[i] = v.TargetID
-				}
-				ids[n] = userID
-				m = append(m, bson.M{"userId": bson.M{"$in": ids}})
+		// Convert an array of Follow(s) into an array of user IDs
+		if len(flws) != 0 {
+			ids := make([]bson.ObjectId, len(flws))
+			for i, v := range flws {
+				ids[i] = v.TargetID
 			}
-		} else {
-			// Following users' tweets are not shown.
-			m = append(m, bson.M{"userId": userID})
+			m = append(m, bson.M{"userId": bson.M{"$in": ids}})
 		}
 	}
 
-	tweets, err := collection.Tweets()
-	if err != nil {
-		return
-	}
-	defer tweets.Close()
-
-	err = tweets.Find(bson.M{"$and": m}).Sort("-_id").Limit(limit).All(&ts)
+	tds, err = readSortedTweetDetails(bson.M{"$and": m}, limit)
 	return
 }
 
@@ -126,6 +112,36 @@ func ReadTweetDetailByID(id bson.ObjectId) (td *entity.TweetDetail, err error) {
 	}
 
 	td, err = readTweetDetailByTweet(*t)
+	return
+}
+
+func readSortedTweetDetails(m bson.M, limit int) (tds []entity.TweetDetail, err error) {
+	tweets, err := collection.Tweets()
+	if err != nil {
+		return
+	}
+	defer tweets.Close()
+
+	ts := []entity.Tweet{}
+	err = tweets.Find(m).Sort("-_id").Limit(limit).All(&ts)
+	if err != nil {
+		return
+	}
+
+	tds, err = readTweetsDetailByTweets(ts)
+	return
+}
+
+func readTweetsDetailByTweets(ts []entity.Tweet) (tds []entity.TweetDetail, err error) {
+	tds = make([]entity.TweetDetail, len(ts))
+	tdp := (*entity.TweetDetail)(nil)
+	for i, t := range ts {
+		tdp, err = readTweetDetailByTweet(t)
+		if err != nil {
+			return
+		}
+		tds[i] = *tdp
+	}
 	return
 }
 

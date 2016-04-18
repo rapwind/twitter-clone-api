@@ -89,9 +89,12 @@ func deleteTweet(c *gin.Context) {
 }
 
 func getTweets(c *gin.Context) {
+	// get session
+	userID, _ := utils.GetLoginUserID(c)
+
+	// Get parameters
 	_, limit := utils.GetRangeParams(c, constant.DefaultLimitGetTweets)
 	maxID := utils.GetObjectIDParam(c, "maxId")
-	userID := utils.GetObjectIDParam(c, "userId")
 	following, _ := validator.Bool{}.Check(c.Request.FormValue("following"))
 	q := c.Request.FormValue("q")
 

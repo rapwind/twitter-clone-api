@@ -35,6 +35,7 @@ func AddV1Endpoints(r *gin.Engine) {
 				validation.ValidatePathParam(constant.IDKey, validator.ObjectID{}),
 			)
 			users.GET("/:"+constant.IDKey, getUser)
+			users.GET("/:"+constant.IDKey+"/tweets", getUserTweets)
 
 			users.Use(middleware.CheckSession())
 			users.GET("/:"+constant.IDKey+"/following", getFollowing)
