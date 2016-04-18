@@ -33,12 +33,16 @@ func AddV1Endpoints(r *gin.Engine) {
 			users.Use(
 				middleware.SetLoginUserIDIfNotEmpty(),
 				validation.ValidatePathParam(constant.IDKey, validator.ObjectID{}),
+				middleware.SetUserOnContext(constant.IDKey),
 			)
 			users.GET("/:"+constant.IDKey, getUser)
 
 			users.Use(middleware.CheckSession())
 			users.GET("/:"+constant.IDKey+"/following", getFollowing)
 			users.GET("/:"+constant.IDKey+"/follower", getFollower)
+
+			users.POST("/:"+constant.IDKey+"/follow", doFollow)
+			users.DELETE(":"+constant.IDKey+"/follow", undoFollow)
 		}
 		tweets := v1.Group("/tweets")
 		{
@@ -50,7 +54,7 @@ func AddV1Endpoints(r *gin.Engine) {
 
 			tweets.Use(middleware.CheckSession())
 			tweets.POST("", createTweet)
-			tweets.DELETE(":"+constant.IDKey, deleteTweet)
+			tweets.DELETE("/:"+constant.IDKey, deleteTweet)
 		}
 		images := v1.Group("/images")
 		{
