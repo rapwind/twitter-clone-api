@@ -59,9 +59,9 @@ func registerUser(c *gin.Context) {
 }
 
 func getUser(c *gin.Context) {
-	_, id := getLoginUserIDAndTargetUser(c)
+	_, u := getLoginUserIDAndTargetUser(c)
 
-	ud, err := service.ReadUserDetailByID(id)
+	ud, err := service.ReadUserDetailByID(u.ID)
 	if err != nil {
 		errors.Send(c, err)
 		return
@@ -101,10 +101,10 @@ func undoFollow(c *gin.Context) {
 }
 
 func getFollowing(c *gin.Context) {
-	_, id := getLoginUserIDAndTargetUser(c)
+	_, u := getLoginUserIDAndTargetUser(c)
 	offset, limit := utils.GetRangeParams(c, constant.DefaultLimitGetFollows)
 
-	flws, err := service.ReadFollowingByID(id, offset, limit)
+	flws, err := service.ReadFollowingByID(u.ID, offset, limit)
 	if err != nil {
 		errors.Send(c, err)
 		return
@@ -123,10 +123,10 @@ func getFollowing(c *gin.Context) {
 }
 
 func getFollower(c *gin.Context) {
-	_, id := getLoginUserIDAndTargetUser(c)
+	_, u := getLoginUserIDAndTargetUser(c)
 	offset, limit := utils.GetRangeParams(c, constant.DefaultLimitGetFollows)
 
-	flws, err := service.ReadFollowerByID(id, offset, limit)
+	flws, err := service.ReadFollowerByID(u.ID, offset, limit)
 	if err != nil {
 		errors.Send(c, err)
 		return

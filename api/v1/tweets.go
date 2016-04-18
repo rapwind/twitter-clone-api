@@ -58,10 +58,10 @@ func createTweet(c *gin.Context) {
 
 func deleteTweet(c *gin.Context) {
 	// get params
-	uid, id := getLoginUserIDAndTargetTweet(c)
+	uid, t := getLoginUserIDAndTargetTweet(c)
 
 	// check tweet
-	t, err := service.ReadTweetByID(id)
+	t, err := service.ReadTweetByID(t.ID)
 	if err != nil {
 		errors.Send(c, errors.NotFound())
 		return
@@ -104,9 +104,9 @@ func getTweets(c *gin.Context) {
 }
 
 func getTweet(c *gin.Context) {
-	_, id := getLoginUserIDAndTargetTweet(c)
+	_, t := getLoginUserIDAndTargetTweet(c)
 
-	td, err := service.ReadTweetDetailByID(id)
+	td, err := service.ReadTweetDetailByID(t.ID)
 	if err != nil {
 		errors.Send(c, err)
 		return
