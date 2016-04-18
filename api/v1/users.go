@@ -145,13 +145,14 @@ func getFollower(c *gin.Context) {
 }
 
 func getUserTweets(c *gin.Context) {
-	uid := utils.GetObjectIDPath(c, constant.IDKey)
+	loginUserID, _ := utils.GetLoginUserID(c)
+	userID := utils.GetObjectIDPath(c, constant.IDKey)
 
 	// Get parameters
 	_, limit := utils.GetRangeParams(c, constant.DefaultLimitGetTweets)
 	maxID := utils.GetObjectIDParam(c, "maxId")
 
-	ts, err := service.ReadUserTweetDetails(uid, limit, maxID)
+	ts, err := service.ReadUserTweetDetails(userID, loginUserID, limit, maxID)
 	if err != nil {
 		errors.Send(c, err)
 		return

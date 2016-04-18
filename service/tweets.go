@@ -7,6 +7,7 @@ import (
 
 	"github.com/techcampman/twitter-d-server/db/collection"
 	"github.com/techcampman/twitter-d-server/entity"
+	"github.com/techcampman/twitter-d-server/errors"
 	"github.com/techcampman/twitter-d-server/logger"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -52,8 +53,7 @@ func RemoveTweet(t *entity.Tweet) (err error) {
 	return
 }
 
-// ReadUserTweetDetails returns an array of TweetDetail(s) posted by a given user.
-func ReadUserTweetDetails(userID bson.ObjectId, limit int, maxID bson.ObjectId) (tds []*entity.TweetDetail, err error) {
+func ReadUserTweetDetails(userID bson.ObjectId, loginUserID bson.ObjectId, limit int, maxID bson.ObjectId) (tds []*entity.TweetDetail, err error) {
 	m := []bson.M{
 		bson.M{"userId": userID},
 		bson.M{"deletedAt": bson.M{"$exists": false}},
@@ -64,7 +64,7 @@ func ReadUserTweetDetails(userID bson.ObjectId, limit int, maxID bson.ObjectId) 
 		m = append(m, bson.M{"_id": bson.M{"$lte": maxID}})
 	}
 
-	tds, err = readSortedTweetDetails(bson.M{"$and": m}, limit)
+	tds, err = readSortedTweetDetails(bson.M{"$and": m}, limit, loginUserID)
 	return
 }
 
@@ -102,22 +102,22 @@ func ReadTweetDetails(limit int, maxID bson.ObjectId, userID bson.ObjectId, foll
 		}
 	}
 
-	tds, err = readSortedTweetDetails(bson.M{"$and": m}, limit)
+	tds, err = readSortedTweetDetails(bson.M{"$and": m}, limit, userID)
 	return
 }
 
 // ReadTweetDetailByID returns TweetDetail by tweet ID
-func ReadTweetDetailByID(id bson.ObjectId) (td *entity.TweetDetail, err error) {
+func ReadTweetDetailByID(id bson.ObjectId, loginUserID bson.ObjectId) (td *entity.TweetDetail, err error) {
 	t, err := ReadTweetByID(id)
 	if err != nil {
 		return
 	}
 
-	td, err = readTweetDetailByTweet(*t)
+	td, err = readTweetDetailByTweet(*t, loginUserID)
 	return
 }
 
-func readSortedTweetDetails(m bson.M, limit int) (tds []*entity.TweetDetail, err error) {
+func readSortedTweetDetails(m bson.M, limit int, loginUserID bson.ObjectId) (tds []*entity.TweetDetail, err error) {
 	tweets, err := collection.Tweets()
 	if err != nil {
 		return
@@ -130,11 +130,11 @@ func readSortedTweetDetails(m bson.M, limit int) (tds []*entity.TweetDetail, err
 		return
 	}
 
-	tds, err = readTweetsDetailByTweets(ts)
+	tds, err = readTweetsDetailByTweets(ts, loginUserID)
 	return
 }
 
-func readTweetsDetailByTweets(ts []entity.Tweet) (tds []*entity.TweetDetail, err error) {
+func readTweetsDetailByTweets(ts []entity.Tweet, loginUserID bson.ObjectId) (tds []*entity.TweetDetail, err error) {
 
 	var wg sync.WaitGroup
 
@@ -152,7 +152,7 @@ func readTweetsDetailByTweets(ts []entity.Tweet) (tds []*entity.TweetDetail, err
 			defer wg.Done()
 
 			td := new(entity.TweetDetail)
-			td, err = readTweetDetailByTweet(t)
+			td, err = readTweetDetailByTweet(t, loginUserID)
 			if err != nil {
 				if err != mgo.ErrNotFound {
 					logger.Error(err)
@@ -183,15 +183,15 @@ LOOP:
 	return
 }
 
-func readTweetDetailByTweet(t entity.Tweet) (td *entity.TweetDetail, err error) {
-	tdwr, err := readTweetDetailWithoutReplyByTweet(t)
+func readTweetDetailByTweet(t entity.Tweet, loginUserID bson.ObjectId) (td *entity.TweetDetail, err error) {
+	tdwr, err := readTweetDetailWithoutReplyByTweet(t, loginUserID)
 	if err != nil {
 		return
 	}
 
 	inReplyToTweet := (*entity.TweetDetailWithoutReply)(nil)
 	if t.InReplyToTweetID.Valid() {
-		inReplyToTweet, err = readTweetDetailWithoutReplyByID(t.InReplyToTweetID)
+		inReplyToTweet, err = readTweetDetailWithoutReplyByID(t.InReplyToTweetID, loginUserID)
 		if err != nil {
 			return
 		}
@@ -201,23 +201,35 @@ func readTweetDetailByTweet(t entity.Tweet) (td *entity.TweetDetail, err error) 
 	return
 }
 
-func readTweetDetailWithoutReplyByID(id bson.ObjectId) (tdwr *entity.TweetDetailWithoutReply, err error) {
-	t, err := ReadTweetByID(id)
+func readTweetDetailWithoutReplyByID(tweetID bson.ObjectId, loginUserID bson.ObjectId) (tdwr *entity.TweetDetailWithoutReply, err error) {
+	t, err := ReadTweetByID(tweetID)
 	if err != nil {
 		return
 	}
 
-	tdwr, err = readTweetDetailWithoutReplyByTweet(*t)
+	tdwr, err = readTweetDetailWithoutReplyByTweet(*t, loginUserID)
 	return
 }
 
-func readTweetDetailWithoutReplyByTweet(t entity.Tweet) (tdwr *entity.TweetDetailWithoutReply, err error) {
+func readTweetDetailWithoutReplyByTweet(t entity.Tweet, loginUserID bson.ObjectId) (tdwr *entity.TweetDetailWithoutReply, err error) {
 	u, err := ReadUserDetailByID(t.UserID)
 	if err != nil {
 		return
 	}
 
-	liked := false // TODO: obtain "liked"
+	likes, err := collection.Likes()
+	if err != nil {
+		return
+	}
+	defer likes.Close()
+
+	var liked bool
+	l := entity.Like{}
+	if loginUserID.Valid() && likes.Find(bson.M{"userId": loginUserID, "tweetId": t.ID}).One(&l) == nil {
+		liked = true
+	} else {
+		liked = false
+	}
 
 	tdwr = &entity.TweetDetailWithoutReply{&t, u, &liked}
 	return
@@ -300,4 +312,80 @@ LOOP:
 	}
 
 	return
+}
+
+// CreateLike creates "entity.Like" data
+func CreateLike(l *entity.Like) (err error) {
+	if err := checkValidLike(l); err != nil {
+		return errors.BadParams("like", "invalid")
+	}
+
+	if checkLiked(l) {
+		err = errors.DataConflict()
+		return
+	}
+
+	l.ID = bson.NewObjectId()
+	l.CreatedAt = l.ID.Time()
+
+	likes, err := collection.Likes()
+	if err != nil {
+		logger.Error(err)
+		return err
+	}
+	defer likes.Close()
+
+	err = likes.Insert(l)
+	if err != nil {
+		logger.Error(err)
+	}
+
+	return
+}
+
+// RemoveLike deletes a document on a collection
+func RemoveLike(l *entity.Like) (err error) {
+	if err := checkValidLike(l); err != nil {
+		return errors.BadParams("like", "invalid")
+	}
+
+	likes, err := collection.Likes()
+	if err != nil {
+		logger.Error(err)
+		return err
+	}
+	defer likes.Close()
+
+	err = likes.Remove(bson.M{"userId": l.UserID, "tweetId": l.TweetID})
+	if err != nil {
+		logger.Error(err)
+	}
+
+	return
+}
+
+func checkLiked(l *entity.Like) (liked bool) {
+	follows, err := collection.Follows()
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	defer follows.Close()
+
+	n, err := follows.Find(bson.M{"userId": l.UserID, "tweetId": l.TweetID}).Count()
+	if err != nil && err != mgo.ErrNotFound {
+		logger.Error(err)
+	}
+
+	return n > 0
+}
+
+func checkValidLike(l *entity.Like) error {
+	if !l.UserID.Valid() {
+		return fmt.Errorf("invalid userId")
+	}
+	if !l.TweetID.Valid() {
+		return fmt.Errorf("invalid tweetId")
+	}
+	return nil
 }

@@ -104,15 +104,47 @@ func getTweets(c *gin.Context) {
 }
 
 func getTweet(c *gin.Context) {
-	_, t := getLoginUserIDAndTargetTweet(c)
+	loginUserID, t := getLoginUserIDAndTargetTweet(c)
 
-	td, err := service.ReadTweetDetailByID(t.ID)
+	td, err := service.ReadTweetDetailByID(t.ID, loginUserID)
 	if err != nil {
 		errors.Send(c, err)
 		return
 	}
 
 	c.JSON(http.StatusOK, td)
+}
+
+func doLike(c *gin.Context) {
+	loginUserID, _ := utils.GetLoginUserID(c)
+	tweetID := utils.GetObjectIDPath(c, constant.IDKey)
+
+	l := &entity.Like{
+		UserID:  loginUserID,
+		TweetID: tweetID,
+	}
+	if err := service.CreateLike(l); err != nil {
+		errors.Send(c, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, l)
+}
+
+func undoLike(c *gin.Context) {
+	loginUserID, _ := utils.GetLoginUserID(c)
+	tweetID := utils.GetObjectIDPath(c, constant.IDKey)
+
+	l := &entity.Like{
+		UserID:  loginUserID,
+		TweetID: tweetID,
+	}
+	if err := service.RemoveLike(l); err != nil {
+		errors.Send(c, err)
+		return
+	}
+
+	c.AbortWithStatus(http.StatusNoContent)
 }
 
 func getLoginUserIDAndTargetTweet(c *gin.Context) (loginUserID bson.ObjectId, param *entity.Tweet) {
