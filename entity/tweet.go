@@ -3,6 +3,9 @@ package entity
 import (
 	"time"
 
+	"github.com/techcampman/twitter-d-server/db/collection"
+	"github.com/techcampman/twitter-d-server/env"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -22,6 +25,9 @@ type (
 	TweetDetail struct {
 		*TweetDetailWithoutReply
 		InReplyToTweet *TweetDetailWithoutReply `json:"inReplyToTweet,omitempty"`
+
+		TargetFunc   func() int64  `json:"-"`
+		PriorityFunc func() string `json:"-"`
 	}
 
 	// TweetDetailWithoutReply ... structure of a tweet "more" information
@@ -31,3 +37,40 @@ type (
 		Liked *bool       `json:"liked,omitempty"`
 	}
 )
+
+// Target from Searcher interface
+func (td *TweetDetail) Target() int64 {
+	return td.TargetFunc()
+}
+
+// Priority from Searcher interface
+func (td *TweetDetail) Priority() string {
+	return td.PriorityFunc()
+}
+
+func initTweetsCollection() {
+
+	// ensure index for tweets collection
+	tweets, err := collection.Tweets()
+	env.AssertErrForInit(err)
+
+	defer tweets.Close()
+
+	err = tweets.EnsureIndex(mgo.Index{
+		Key:        []string{"-createdAt", "deletedAt"},
+		Unique:     false,
+		DropDups:   false,
+		Background: true,
+		Sparse:     true,
+	})
+	env.AssertErrForInit(err)
+
+	err = tweets.EnsureIndex(mgo.Index{
+		Key:        []string{"userId", "deletedAt"},
+		Unique:     false,
+		DropDups:   false,
+		Background: true,
+		Sparse:     true,
+	})
+	env.AssertErrForInit(err)
+}
