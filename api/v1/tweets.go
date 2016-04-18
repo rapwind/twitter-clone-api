@@ -116,12 +116,11 @@ func getTweet(c *gin.Context) {
 }
 
 func doLike(c *gin.Context) {
-	loginUserID, _ := utils.GetLoginUserID(c)
-	tweetID := utils.GetObjectIDPath(c, constant.IDKey)
+	loginUserID, t := getLoginUserIDAndTargetTweet(c)
 
 	l := &entity.Like{
 		UserID:  loginUserID,
-		TweetID: tweetID,
+		TweetID: t.ID,
 	}
 	if err := service.CreateLike(l); err != nil {
 		errors.Send(c, err)
@@ -132,12 +131,11 @@ func doLike(c *gin.Context) {
 }
 
 func undoLike(c *gin.Context) {
-	loginUserID, _ := utils.GetLoginUserID(c)
-	tweetID := utils.GetObjectIDPath(c, constant.IDKey)
+	loginUserID, t := getLoginUserIDAndTargetTweet(c)
 
 	l := &entity.Like{
 		UserID:  loginUserID,
-		TweetID: tweetID,
+		TweetID: t.ID,
 	}
 	if err := service.RemoveLike(l); err != nil {
 		errors.Send(c, err)
