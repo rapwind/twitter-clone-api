@@ -14,6 +14,7 @@ import (
 	"github.com/techcampman/twitter-d-server/jsonschema"
 	"github.com/techcampman/twitter-d-server/service"
 	"github.com/techcampman/twitter-d-server/utils"
+	"gopkg.in/mgo.v2/bson"
 )
 
 func registerUser(c *gin.Context) {
@@ -67,6 +68,36 @@ func getUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, ud)
+}
+
+func doFollow(c *gin.Context) {
+	l, u := getLoginUserIDAndTargetUser(c)
+
+	f := &entity.Follow{
+		UserID:   l,
+		TargetID: u.ID,
+	}
+	if err := service.CreateFollow(f); err != nil {
+		errors.Send(c, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, f)
+}
+
+func undoFollow(c *gin.Context) {
+	l, u := getLoginUserIDAndTargetUser(c)
+
+	f := &entity.Follow{
+		UserID:   l,
+		TargetID: u.ID,
+	}
+	if err := service.RemoveFollow(f); err != nil {
+		errors.Send(c, err)
+		return
+	}
+
+	c.AbortWithStatus(http.StatusNoContent)
 }
 
 func getFollowing(c *gin.Context) {
@@ -127,4 +158,10 @@ func getUserTweets(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, ts)
+}
+
+func getLoginUserIDAndTargetUser(c *gin.Context) (loginUserID bson.ObjectId, param *entity.User) {
+	loginUserID, _ = utils.GetLoginUserID(c)
+	param, _ = utils.GetTargetUser(c)
+	return
 }

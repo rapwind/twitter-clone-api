@@ -70,3 +70,19 @@ func GetLoginUserID(c *gin.Context) (userID bson.ObjectId, err error) {
 
 	return
 }
+
+// GetTargetUser ... get target user from session
+func GetTargetUser(c *gin.Context) (u *entity.User, err error) {
+	i, exists := c.Get(constant.TargetUserKey)
+	if !exists {
+		err = fmt.Errorf("not found in gin.Context. key = %s", constant.TargetUserKey)
+		return
+	}
+	u = i.(*entity.User)
+	return
+}
+
+// SetTargetUser ... set user on session
+func SetTargetUser(c *gin.Context, u *entity.User) {
+	c.Set(constant.TargetUserKey, u)
+}

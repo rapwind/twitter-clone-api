@@ -5,4 +5,6 @@ const (
 	IDKey = "id"
 	// LoginUserKey for *gin.Context
 	LoginUserKey = "loginUser"
+	// TargetUserKey for *gin.Context
+	TargetUserKey = "targetUserKey"
 )

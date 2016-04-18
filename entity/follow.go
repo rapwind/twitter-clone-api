@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"time"
+
 	"github.com/techcampman/twitter-d-server/db/collection"
 	"github.com/techcampman/twitter-d-server/env"
 	"gopkg.in/mgo.v2"
@@ -10,9 +12,10 @@ import (
 type (
 	// Follow ... structure of a follow
 	Follow struct {
-		ID       bson.ObjectId `json:"-"        bson:"_id"      validate:"objectId"`
-		UserID   bson.ObjectId `json:"userId"   bson:"userId"   validate:"objectId"`
-		TargetID bson.ObjectId `json:"targetId" bson:"targetId" validate:"objectId"`
+		ID        bson.ObjectId `json:"-"        bson:"_id"      validate:"objectId"`
+		UserID    bson.ObjectId `json:"userId"   bson:"userId"   validate:"objectId"`
+		TargetID  bson.ObjectId `json:"targetId" bson:"targetId" validate:"objectId"`
+		CreatedAt time.Time     `json:"-"        bson:"createdAt"`
 	}
 )
 

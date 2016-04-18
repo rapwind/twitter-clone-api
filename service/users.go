@@ -6,6 +6,7 @@ import (
 	"github.com/techcampman/twitter-d-server/constant"
 	"github.com/techcampman/twitter-d-server/db/collection"
 	"github.com/techcampman/twitter-d-server/entity"
+	"github.com/techcampman/twitter-d-server/errors"
 	"github.com/techcampman/twitter-d-server/logger"
 	"github.com/techcampman/twitter-d-server/utils"
 	"gopkg.in/mgo.v2"
@@ -135,4 +136,86 @@ func ReadFollowsCountsByID(id bson.ObjectId) (followingCount int, followerCount 
 
 	followerCount, err = follows.Find(bson.M{"targetId": id}).Count()
 	return
+}
+
+// CreateFollow creates "entity.Follow" data
+func CreateFollow(f *entity.Follow) (err error) {
+	if err := CheckRequiredForFollowing(f); err != nil {
+		return errors.BadParams("follow", "invalid")
+	}
+
+	if CheckFollowing(f) {
+		err = errors.DataConflict()
+		return
+	}
+
+	f.ID = bson.NewObjectId()
+	f.CreatedAt = f.ID.Time()
+
+	follows, err := collection.Follows()
+	if err != nil {
+		logger.Error(err)
+		return err
+	}
+	defer follows.Close()
+
+	err = follows.Insert(f)
+	if err != nil {
+		logger.Error(err)
+	}
+
+	return
+}
+
+// RemoveFollow deletes a document on follow collection
+func RemoveFollow(f *entity.Follow) (err error) {
+	if err := CheckRequiredForFollowing(f); err != nil {
+		return errors.BadParams("follow", "invalid")
+	}
+
+	follows, err := collection.Follows()
+	if err != nil {
+		logger.Error(err)
+		return err
+	}
+	defer follows.Close()
+
+	err = follows.Remove(bson.M{"userId": f.UserID, "targetId": f.TargetID})
+	if err != nil && err != mgo.ErrNotFound {
+		logger.Error(err)
+	}
+
+	return
+}
+
+// CheckFollowing already checks a follow status
+func CheckFollowing(f *entity.Follow) (followed bool) {
+
+	follows, err := collection.Follows()
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	defer follows.Close()
+
+	n, err := follows.Find(bson.M{"userId": f.UserID, "targetId": f.TargetID}).Count()
+	if err != nil && err != mgo.ErrNotFound {
+		logger.Error(err)
+	}
+
+	return n > 0
+}
+
+// CheckRequiredForFollowing checks required fields of Follow
+func CheckRequiredForFollowing(f *entity.Follow) error {
+	if !f.UserID.Valid() {
+		return fmt.Errorf("invalid userId")
+	}
+	if !f.TargetID.Valid() {
+		return fmt.Errorf("invalid targetId")
+	}
+	if f.UserID == f.TargetID {
+		return fmt.Errorf("invalid targetId")
+	}
+	return nil
 }
