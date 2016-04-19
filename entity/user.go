@@ -21,7 +21,7 @@ type (
 		ProfileImageURL           string        `json:"profileImageUrl,omitempty"           bson:"profileImageUrl,omitempty"`
 		ProfileBackgroundImageURL string        `json:"profileBackgroundImageUrl,omitempty" bson:"profileBackgroundImageUrl,omitempty"`
 		Biography                 string        `json:"biography,omitempty"                 bson:"biography,omitempty"`
-		LocationText              string        `json:"locationText,omitempty"              bson:"localtionText,omitempty"`
+		LocationText              string        `json:"locationText,omitempty"              bson:"locationText,omitempty"`
 		URL                       string        `json:"url,omitempty"                       bson:"url,omitempty"`
 		Birthday                  *time.Time    `json:"birthday,omitempty"                  bson:"birthday,omitempty"`
 		CreatedAt                 time.Time     `json:"createdAt"                           bson:"createdAt"`
