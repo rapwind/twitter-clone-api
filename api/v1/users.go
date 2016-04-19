@@ -15,6 +15,7 @@ import (
 	"github.com/techcampman/twitter-d-server/service"
 	"github.com/techcampman/twitter-d-server/utils"
 	"gopkg.in/mgo.v2/bson"
+	"os/user"
 )
 
 func registerUser(c *gin.Context) {
@@ -162,14 +163,13 @@ func getUserTweets(c *gin.Context) {
 }
 
 func getUserLikedTweets(c *gin.Context) {
-	loginUserID, _ := utils.GetLoginUserID(c)
-	userID := utils.GetObjectIDPath(c, constant.IDKey)
+	loginUserID, user := getLoginUserIDAndTargetUser(c)
 
 	// Get parameters
 	_, limit := utils.GetRangeParams(c, constant.DefaultLimitGetTweets)
 	maxID := utils.GetObjectIDParam(c, "maxId")
 
-	ts, err := service.ReadUserLikedTweetDetails(userID, loginUserID, limit, maxID)
+	ts, err := service.ReadUserLikedTweetDetails(user.ID, loginUserID, limit, maxID)
 	if err != nil {
 		errors.Send(c, err)
 		return
@@ -178,8 +178,8 @@ func getUserLikedTweets(c *gin.Context) {
 	c.JSON(http.StatusOK, ts)
 }
 
-func getLoginUserIDAndTargetUser(c *gin.Context) (loginUserID bson.ObjectId, param *entity.User) {
+func getLoginUserIDAndTargetUser(c *gin.Context) (loginUserID bson.ObjectId, user *entity.User) {
 	loginUserID, _ = utils.GetLoginUserID(c)
-	param, _ = utils.GetTargetUser(c)
+	user, _ = utils.GetTargetUser(c)
 	return
 }
