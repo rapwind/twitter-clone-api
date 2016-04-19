@@ -15,7 +15,6 @@ import (
 	"github.com/techcampman/twitter-d-server/service"
 	"github.com/techcampman/twitter-d-server/utils"
 	"gopkg.in/mgo.v2/bson"
-	"os/user"
 )
 
 func registerUser(c *gin.Context) {
