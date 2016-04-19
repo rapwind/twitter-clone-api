@@ -35,7 +35,7 @@ func initSessionsCollection() {
 	defer sessions.Close()
 
 	err = sessions.EnsureIndex(mgo.Index{
-		Key:        []string{"hash"},
+		Key:        []string{"uuid"},
 		Unique:     true,
 		DropDups:   false,
 		Background: true,
