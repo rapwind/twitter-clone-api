@@ -112,7 +112,7 @@ func getSession(c *gin.Context) (userID bson.ObjectId, err error) {
 	if err != nil {
 		s, err := service.ReadSessionByID(bson.ObjectIdHex(sid))
 		if err == nil {
-			SetSession(c, s)
+			err = env.GetCache().Set(constant.UserSessionPrefix+sid, s.UserID.Hex(), constant.SessionExpires)
 		}
 	} else {
 		userID = bson.ObjectIdHex(string(reply.([]byte)))
