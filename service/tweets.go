@@ -268,7 +268,7 @@ func readTweetDetailWithoutReplyByTweet(t entity.Tweet, loginUserID bson.ObjectI
 		likedCountChan <- c
 	}(t.ID)
 
-	LOOP:
+LOOP:
 	for {
 		select {
 		case <-finChan:
