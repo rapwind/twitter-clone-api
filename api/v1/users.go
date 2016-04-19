@@ -161,6 +161,23 @@ func getUserTweets(c *gin.Context) {
 	c.JSON(http.StatusOK, ts)
 }
 
+func getUserLikedTweets(c *gin.Context) {
+	loginUserID, _ := utils.GetLoginUserID(c)
+	userID := utils.GetObjectIDPath(c, constant.IDKey)
+
+	// Get parameters
+	_, limit := utils.GetRangeParams(c, constant.DefaultLimitGetTweets)
+	maxID := utils.GetObjectIDParam(c, "maxId")
+
+	ts, err := service.ReadUserLikedTweetDetails(userID, loginUserID, limit, maxID)
+	if err != nil {
+		errors.Send(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, ts)
+}
+
 func getLoginUserIDAndTargetUser(c *gin.Context) (loginUserID bson.ObjectId, param *entity.User) {
 	loginUserID, _ = utils.GetLoginUserID(c)
 	param, _ = utils.GetTargetUser(c)
