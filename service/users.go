@@ -51,7 +51,15 @@ func ReadUserDetailByID(id bson.ObjectId) (ud *entity.UserDetail, err error) {
 	}
 	ud = new(entity.UserDetail)
 	ud.User = u
+	if err := AppendCounterToUserDetail(ud); err != nil {
+		logger.Error(err)
+	}
 
+	return
+}
+
+// AppendCounterToUserDetail returns UserDetail append some count
+func AppendCounterToUserDetail(ud *entity.UserDetail) (err error) {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
@@ -76,7 +84,7 @@ func ReadUserDetailByID(id bson.ObjectId) (ud *entity.UserDetail, err error) {
 		}
 		tweetsCountChan <- tc
 		likesCountChan <- lc
-	}(u)
+	}(ud.User)
 
 	go func(id bson.ObjectId) {
 		defer wg.Done()
@@ -87,7 +95,7 @@ func ReadUserDetailByID(id bson.ObjectId) (ud *entity.UserDetail, err error) {
 		}
 		followerCountChan <- fwc
 		followingCountChan <- fgc
-	}(u.ID)
+	}(ud.ID)
 
 LOOP:
 	for {
