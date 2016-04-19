@@ -232,7 +232,14 @@ func readTweetDetailWithoutReplyByTweet(t entity.Tweet, loginUserID bson.ObjectI
 		liked = false
 	}
 
-	tdwr = &entity.TweetDetailWithoutReply{&t, u, &liked}
+	c, err := ReadLikedCountByTweetID(t.ID)
+
+	tdwr = &entity.TweetDetailWithoutReply{
+		Tweet:      &t,
+		User:       u,
+		LikedCount: c,
+		Liked:      &liked,
+	}
 	return
 }
 
@@ -246,6 +253,19 @@ func ReadTweetByID(id bson.ObjectId) (t *entity.Tweet, err error) {
 
 	t = new(entity.Tweet)
 	err = tweets.Find(bson.M{"_id": id}).One(t)
+	return
+}
+
+// ReadLikedCountByTweetID gets entity.TweetDetail.LikedCount by TweetID
+func ReadLikedCountByTweetID(id bson.ObjectId) (likedCount int, err error) {
+	likes, err := collection.Likes()
+	if err != nil {
+		return
+	}
+	defer likes.Close()
+
+	likedCount, err = likes.Find(bson.M{"tweetId": id}).Count()
+
 	return
 }
 
