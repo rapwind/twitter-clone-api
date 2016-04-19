@@ -136,7 +136,6 @@ func readSortedTweetDetails(m bson.M, limit int, loginUserID bson.ObjectId) (tds
 }
 
 func readTweetsDetailByTweets(ts []entity.Tweet, loginUserID bson.ObjectId) (tds []*entity.TweetDetail, err error) {
-
 	var wg sync.WaitGroup
 
 	finChan := make(chan bool)
@@ -213,32 +212,73 @@ func readTweetDetailWithoutReplyByID(tweetID bson.ObjectId, loginUserID bson.Obj
 }
 
 func readTweetDetailWithoutReplyByTweet(t entity.Tweet, loginUserID bson.ObjectId) (tdwr *entity.TweetDetailWithoutReply, err error) {
-	u, err := ReadUserDetailByID(t.UserID)
-	if err != nil {
-		return
-	}
+	var wg sync.WaitGroup
+	wg.Add(3)
 
-	likes, err := collection.Likes()
-	if err != nil {
-		return
-	}
-	defer likes.Close()
+	finChan := make(chan bool)
+	errChan := make(chan error)
+	userDetailChan := make(chan *entity.UserDetail)
+	likedChan := make(chan *bool)
+	likedCountChan := make(chan int)
 
-	var liked bool
-	l := entity.Like{}
-	if loginUserID.Valid() && likes.Find(bson.M{"userId": loginUserID, "tweetId": t.ID}).One(&l) == nil {
-		liked = true
-	} else {
-		liked = false
-	}
+	tdwr = &entity.TweetDetailWithoutReply{Tweet: &t}
 
-	c, err := ReadLikedCountByTweetID(t.ID)
+	go func() {
+		wg.Wait()
+		finChan <- true
+	}()
 
-	tdwr = &entity.TweetDetailWithoutReply{
-		Tweet:      &t,
-		User:       u,
-		LikedCount: c,
-		Liked:      &liked,
+	go func(id bson.ObjectId) {
+		defer wg.Done()
+
+		u, err := ReadUserDetailByID(id)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		userDetailChan <- u
+	}(t.UserID)
+
+	go func(loginUserID bson.ObjectId, tweetID bson.ObjectId) {
+		defer wg.Done()
+
+		likes, err := collection.Likes()
+		if err != nil {
+			errChan <- err
+			return
+		}
+		defer likes.Close()
+		l := entity.Like{}
+		var liked bool
+		if loginUserID.Valid() && likes.Find(bson.M{"userId": loginUserID, "tweetId": tweetID}).One(&l) == nil {
+			liked = true
+		} else {
+			liked = false
+		}
+		likedChan <- &liked
+	}(loginUserID, t.ID)
+
+	go func(id bson.ObjectId) {
+		defer wg.Done()
+		c, err := ReadLikedCountByTweetID(id)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		likedCountChan <- c
+	}(t.ID)
+
+	LOOP:
+	for {
+		select {
+		case <-finChan:
+			break LOOP
+		case err = <-errChan:
+			return
+		case tdwr.User = <-userDetailChan:
+		case tdwr.Liked = <-likedChan:
+		case tdwr.LikedCount = <-likedCountChan:
+		}
 	}
 	return
 }
