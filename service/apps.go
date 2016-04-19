@@ -21,16 +21,36 @@ func CreateInstallation(i *entity.Installation) (err error) {
 	i.ID = bson.NewObjectId()
 	i.UUID = utils.GetNewUUIDv4()
 	i.CreatedAt = i.ID.Time()
+	i.UpdatedAt = i.ID.Time()
 
-	c, err := collection.Installations()
+	installations, err := collection.Installations()
 	if err != nil {
 		return
 	}
-	defer c.Close()
+	defer installations.Close()
 
-	err = c.Insert(i)
+	err = installations.Insert(i)
 	if err != nil && !mgo.IsDup(err) {
 		logger.Error(err)
+	}
+
+	return
+}
+
+// UpdateInstallation inserts a installation
+func UpdateInstallation(i *entity.Installation) (err error) {
+
+	i.UpdatedAt = utils.GetNowTruncateSecond()
+
+	installations, err := collection.Installations()
+	if err != nil {
+		return
+	}
+	defer installations.Close()
+
+	if err = installations.UpdateId(i.ID, i); err != nil {
+		logger.Error(err)
+		return
 	}
 
 	return
