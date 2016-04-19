@@ -49,23 +49,58 @@ func ReadUserDetailByID(id bson.ObjectId) (ud *entity.UserDetail, err error) {
 	if err != nil {
 		return
 	}
+	ud = new(entity.UserDetail)
+	ud.User = u
 
-	tweetsCount, likesCount, err := ReadTweetsCountsByUser(*u)
-	if err != nil {
-		return
-	}
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-	followingCount, followerCount, err := ReadFollowsCountsByID(id)
-	if err != nil {
-		return
-	}
+	finChan := make(chan bool)
+	errChan := make(chan error)
+	tweetsCountChan := make(chan int)
+	likesCountChan := make(chan int)
+	followingCountChan := make(chan int)
+	followerCountChan := make(chan int)
 
-	ud = &entity.UserDetail{
-		User:           u,
-		TweetsCount:    tweetsCount,
-		LikesCount:     likesCount,
-		FollowerCount:  followerCount,
-		FollowingCount: followingCount,
+	go func() {
+		wg.Wait()
+		finChan <- true
+	}()
+
+	go func(u *entity.User) {
+		defer wg.Done()
+		tc, lc, err := ReadTweetsCountsByUser(*u)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		tweetsCountChan <- tc
+		likesCountChan <- lc
+	}(u)
+
+	go func(id bson.ObjectId) {
+		defer wg.Done()
+		fgc, fwc, err := ReadFollowsCountsByID(id)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		followerCountChan <- fwc
+		followingCountChan <- fgc
+	}(u.ID)
+
+LOOP:
+	for {
+		select {
+		case <-finChan:
+			break LOOP
+		case err = <-errChan:
+			return
+		case ud.TweetsCount = <-tweetsCountChan:
+		case ud.LikesCount = <-likesCountChan:
+		case ud.FollowerCount = <-followerCountChan:
+		case ud.FollowingCount = <-followingCountChan:
+		}
 	}
 	return
 }

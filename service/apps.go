@@ -6,6 +6,7 @@ import (
 	"github.com/techcampman/twitter-d-server/db/collection"
 	"github.com/techcampman/twitter-d-server/entity"
 	"github.com/techcampman/twitter-d-server/logger"
+	"github.com/techcampman/twitter-d-server/utils"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -18,6 +19,7 @@ func CreateInstallation(i *entity.Installation) (err error) {
 	}
 
 	i.ID = bson.NewObjectId()
+	i.UUID = utils.GetNewUUIDv4()
 	i.CreatedAt = i.ID.Time()
 
 	c, err := collection.Installations()
@@ -31,5 +33,18 @@ func CreateInstallation(i *entity.Installation) (err error) {
 		logger.Error(err)
 	}
 
+	return
+}
+
+// ReadInstallationByUUID gets "entity.Installation" data
+func ReadInstallationByUUID(uuid string) (i *entity.Installation, err error) {
+	installations, err := collection.Installations()
+	if err != nil {
+		return
+	}
+	defer installations.Close()
+
+	i = new(entity.Installation)
+	err = installations.Find(bson.M{"uuid": uuid}).One(i)
 	return
 }

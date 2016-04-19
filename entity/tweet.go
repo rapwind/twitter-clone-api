@@ -33,8 +33,9 @@ type (
 	// TweetDetailWithoutReply ... structure of a tweet "more" information
 	TweetDetailWithoutReply struct {
 		*Tweet
-		User  *UserDetail `json:"user"`
-		Liked *bool       `json:"liked,omitempty"`
+		User       *UserDetail `json:"user"`
+		LikedCount int         `json:"likedCount"`
+		Liked      *bool       `json:"liked,omitempty"`
 	}
 )
 
