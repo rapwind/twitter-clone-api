@@ -17,14 +17,18 @@ func AddV1Endpoints(r *gin.Engine) {
 		logging.ActivityLogger(env.GetActivityLogger(), nil),
 	)
 	{
-		v1.POST("/apps", createInstallation)
-
-		session := v1.Group("/sessions")
+		apps := v1.Group("/apps")
 		{
-			session.POST("", signIn)
+			apps.POST("", createInstallation)
+			apps.PUT("", updateInstallation)
+		}
 
-			session.Use(middleware.CheckSession())
-			session.DELETE("", signOut)
+		sessions := v1.Group("/sessions")
+		{
+			sessions.POST("", signIn)
+
+			sessions.Use(middleware.CheckSession())
+			sessions.DELETE("", signOut)
 		}
 		users := v1.Group("/users")
 		{

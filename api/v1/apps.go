@@ -46,3 +46,47 @@ func createInstallation(c *gin.Context) {
 
 	c.AbortWithStatus(http.StatusCreated)
 }
+
+func updateInstallation(c *gin.Context) {
+	// validate request
+	installationID := c.Request.Header.Get(constant.XPoppoInstallationID)
+	if installationID == "" {
+		errors.Send(c, errors.Unauthorized())
+		return
+	}
+	i, err := service.ReadInstallationByUUID(installationID)
+	if err != nil {
+		errors.Send(c, errors.BadParams(constant.XPoppoInstallationID, installationID))
+		return
+	}
+
+	b, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		errors.Send(c, errors.RequestEntityTooLarge())
+		return
+	}
+
+	// validate
+	err = jsonschema.JSONSchema(b, jsonschema.V1UpdateInstallationDocument)
+	if err != nil {
+		errors.Send(c, err)
+		return
+	}
+
+	// unmarshal json
+	if err = json.Unmarshal(b, i); err != nil {
+		errors.Send(c, errors.BadParams("body", string(b)))
+		return
+	}
+
+	// update installation
+	if err = service.UpdateInstallation(i); err != nil {
+		errors.Send(c, fmt.Errorf("failed to update a installation"))
+		return
+	}
+
+	// set header
+	c.Writer.Header().Set(constant.XPoppoInstallationID, i.UUID)
+
+	c.AbortWithStatus(http.StatusNoContent)
+}

@@ -17,6 +17,7 @@ type (
 		ClientType  string        `json:"clientType"            bson:"clientType"`
 		DeviceToken string        `json:"deviceToken,omitempty" bson:"deviceToken,omitempty"`
 		CreatedAt   time.Time     `json:"createdAt"             bson:"createdAt"`
+		UpdatedAt   time.Time     `json:"updatedAt"             bson:"updatedAt"`
 	}
 )
 

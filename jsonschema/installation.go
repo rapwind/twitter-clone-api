@@ -8,6 +8,8 @@ import (
 var (
 	// V1CreateInstallationDocument ... json schema for POST /v1/apps
 	V1CreateInstallationDocument *gojsonschema.Schema
+	// V1UpdateInstallationDocument ... json schema for POST /v1/apps
+	V1UpdateInstallationDocument *gojsonschema.Schema
 
 	//
 	// schema definitions
@@ -22,12 +24,23 @@ var (
 		"additionalProperties": false,
 		"required":             []interface{}{"clientType"},
 	}
+
+	v1UpdateInstallationSchema = map[string]interface{}{
+		"type": "object",
+		"properties": map[string]interface{}{
+			"deviceToken": deviceToken,
+		},
+		"additionalProperties": false,
+	}
 )
 
 func initInstallationSchema() {
 
 	var err error
 	V1CreateInstallationDocument, err = gojsonschema.NewSchema(gojsonschema.NewGoLoader(v1CreateInstallationSchema))
+	env.AssertErrForInit(err)
+
+	V1UpdateInstallationDocument, err = gojsonschema.NewSchema(gojsonschema.NewGoLoader(v1UpdateInstallationSchema))
 	env.AssertErrForInit(err)
 
 	return
