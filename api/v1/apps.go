@@ -42,7 +42,7 @@ func createInstallation(c *gin.Context) {
 	}
 
 	// set header
-	c.Writer.Header().Set(constant.XPoppoInstallationID, i.ID.Hex())
+	c.Writer.Header().Set(constant.XPoppoInstallationID, i.UUID)
 
 	c.AbortWithStatus(http.StatusCreated)
 }

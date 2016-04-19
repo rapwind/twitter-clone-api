@@ -6,6 +6,7 @@ import (
 	"github.com/techcampman/twitter-d-server/db/collection"
 	"github.com/techcampman/twitter-d-server/entity"
 	"github.com/techcampman/twitter-d-server/logger"
+	"github.com/techcampman/twitter-d-server/utils"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -28,6 +29,7 @@ func CreateSession(s *entity.Session) (err error) {
 	}
 
 	s.ID = bson.NewObjectId()
+	s.UUID = utils.GetNewUUIDv4()
 	s.CreatedAt = s.ID.Time()
 
 	err = sessions.Insert(s)
@@ -38,8 +40,8 @@ func CreateSession(s *entity.Session) (err error) {
 	return
 }
 
-// ReadSessionByID gets "entity.Session" data
-func ReadSessionByID(id bson.ObjectId) (s *entity.Session, err error) {
+// ReadSessionByUUID gets "entity.Session" data
+func ReadSessionByUUID(uuid string) (s *entity.Session, err error) {
 	sessions, err := collection.Sessions()
 	if err != nil {
 		return
@@ -47,7 +49,7 @@ func ReadSessionByID(id bson.ObjectId) (s *entity.Session, err error) {
 	defer sessions.Close()
 
 	s = new(entity.Session)
-	err = sessions.Find(bson.M{"_id": id}).One(s)
+	err = sessions.Find(bson.M{"uuid": uuid}).One(s)
 	return
 }
 
@@ -61,6 +63,23 @@ func RemoveSessionByID(id bson.ObjectId) (err error) {
 	defer sessions.Close()
 
 	err = sessions.Remove(bson.M{"_id": id})
+	if err != nil && err != mgo.ErrNotFound {
+		logger.Error(err)
+	}
+
+	return
+}
+
+// RemoveSessionByUUID deletes a document on follow collection
+func RemoveSessionByUUID(uuid string) (err error) {
+	sessions, err := collection.Sessions()
+	if err != nil {
+		logger.Error(err)
+		return err
+	}
+	defer sessions.Close()
+
+	err = sessions.Remove(bson.M{"uuid": uuid})
 	if err != nil && err != mgo.ErrNotFound {
 		logger.Error(err)
 	}

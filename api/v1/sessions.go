@@ -15,6 +15,7 @@ import (
 	"github.com/techcampman/twitter-d-server/errors"
 	"github.com/techcampman/twitter-d-server/jsonschema"
 	"github.com/techcampman/twitter-d-server/middleware"
+	"github.com/techcampman/twitter-d-server/service"
 	"github.com/techcampman/twitter-d-server/utils"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -25,6 +26,11 @@ func signIn(c *gin.Context) {
 	installationID := c.Request.Header.Get(constant.XPoppoInstallationID)
 	if installationID == "" {
 		errors.Send(c, errors.Unauthorized())
+		return
+	}
+	i, err := service.ReadInstallationByUUID(installationID)
+	if err != nil {
+		errors.Send(c, errors.BadParams(constant.XPoppoInstallationID, installationID))
 		return
 	}
 
@@ -66,7 +72,7 @@ func signIn(c *gin.Context) {
 
 	s := new(entity.Session)
 	s.UserID = u.ID
-	s.InstallationID = bson.ObjectIdHex(installationID)
+	s.InstallationID = i.ID
 	middleware.SetSession(c, s)
 
 	c.JSON(http.StatusOK, u)
