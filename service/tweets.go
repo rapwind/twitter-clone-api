@@ -119,7 +119,7 @@ func ReadUserTweetDetails(userID bson.ObjectId, loginUserID bson.ObjectId, limit
 }
 
 // ReadTweetDetails returns an array of TweetDetail(s)
-func ReadTweetDetails(limit int, maxID bson.ObjectId, userID bson.ObjectId, following bool, q string) (tds []*entity.TweetDetail, err error) {
+func ReadTweetDetails(limit int, maxID bson.ObjectId, sinceID bson.ObjectId, userID bson.ObjectId, following bool, q string) (tds []*entity.TweetDetail, err error) {
 	m := []bson.M{
 		bson.M{"deletedAt": bson.M{"$exists": false}},
 	}
@@ -127,6 +127,11 @@ func ReadTweetDetails(limit int, maxID bson.ObjectId, userID bson.ObjectId, foll
 	// if maxId is set:
 	if maxID.Valid() {
 		m = append(m, bson.M{"_id": bson.M{"$lte": maxID}})
+	}
+
+	// if sinceId is set:
+	if sinceID.Valid() {
+		m = append(m, bson.M{"_id": bson.M{"$gt": sinceID}})
 	}
 
 	// if query is set:
