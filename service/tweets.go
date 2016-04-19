@@ -53,6 +53,55 @@ func RemoveTweet(t *entity.Tweet) (err error) {
 	return
 }
 
+// ReadUserLikedTweetDetails returns TweetDetails by user ID
+func ReadUserLikedTweetDetails(userID bson.ObjectId, loginUserID bson.ObjectId, limit int, maxID bson.ObjectId) (tds []*entity.TweetDetail, err error) {
+	if limit == 0 {
+		return
+	}
+
+	m := bson.M{"userId": userID}
+
+	// if maxID is set:
+	if maxID.Valid() {
+		m["tweetId"] = bson.M{"$lte": maxID}
+	}
+
+	likes, err := collection.Likes()
+	if err != nil {
+		return
+	}
+	defer likes.Close()
+
+	iter := likes.Find(m).Sort("-createdAt").Iter()
+
+	ts := []entity.Tweet{}
+
+	var l entity.Like
+	var t *entity.Tweet
+	for iter.Next(&l) {
+		t, err = ReadTweetByID(l.TweetID)
+		if err != nil {
+			return
+		}
+
+		if t.DeletedAt == nil { // removed tweets are not appended
+			ts = append(ts, *t)
+			if limit > 0 && len(ts) == limit {
+				break
+			}
+		}
+	}
+
+	err = iter.Close()
+	if err != nil {
+		return
+	}
+
+	tds, err = readTweetDetailsByTweets(ts, loginUserID)
+
+	return
+}
+
 // ReadUserTweetDetails returns TweetDetails by user ID
 func ReadUserTweetDetails(userID bson.ObjectId, loginUserID bson.ObjectId, limit int, maxID bson.ObjectId) (tds []*entity.TweetDetail, err error) {
 	m := []bson.M{
@@ -131,11 +180,11 @@ func readSortedTweetDetails(m bson.M, limit int, loginUserID bson.ObjectId) (tds
 		return
 	}
 
-	tds, err = readTweetsDetailByTweets(ts, loginUserID)
+	tds, err = readTweetDetailsByTweets(ts, loginUserID)
 	return
 }
 
-func readTweetsDetailByTweets(ts []entity.Tweet, loginUserID bson.ObjectId) (tds []*entity.TweetDetail, err error) {
+func readTweetDetailsByTweets(ts []entity.Tweet, loginUserID bson.ObjectId) (tds []*entity.TweetDetail, err error) {
 	var wg sync.WaitGroup
 
 	finChan := make(chan bool)
