@@ -62,12 +62,16 @@ func signIn(c *gin.Context) {
 	defer users.Close()
 
 	q := createSignInQueryFromRequest(req)
-	fmt.Println(q)
 	u := new(entity.User)
 	err = users.Find(q).One(u)
 	if err != nil {
 		errors.Send(c, errors.Unauthorized())
 		return
+	}
+	ud := new(entity.UserDetail)
+	ud.User = u
+	if err := service.AppendCounterToUserDetail(ud); err != nil {
+		errors.Send(c, err)
 	}
 
 	s := new(entity.Session)
@@ -75,7 +79,7 @@ func signIn(c *gin.Context) {
 	s.InstallationID = i.ID
 	middleware.SetSession(c, s)
 
-	c.JSON(http.StatusOK, u)
+	c.JSON(http.StatusOK, ud)
 }
 
 func signOut(c *gin.Context) {
