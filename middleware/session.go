@@ -56,7 +56,7 @@ func SetSession(c *gin.Context, s *entity.Session) (err error) {
 		logger.Error(err)
 		return
 	}
-	sid := string(s.ID.Hex())
+	sid := s.UUID
 	err = env.GetCache().Set(constant.UserSessionPrefix+sid, s.UserID.Hex(), constant.SessionExpires)
 	if err != nil {
 		logger.Error(err)
@@ -71,7 +71,7 @@ func SetSession(c *gin.Context, s *entity.Session) (err error) {
 func DelSession(c *gin.Context) (err error) {
 	sid := utils.GetPoppoHeader(c).SessionID
 
-	err = service.RemoveSessionByID(bson.ObjectIdHex(sid))
+	err = service.RemoveSessionByUUID(sid)
 	if err != nil {
 		logger.Error(err)
 	}
@@ -110,7 +110,7 @@ func getSession(c *gin.Context) (userID bson.ObjectId, err error) {
 
 	reply, err := env.GetCache().Get(constant.UserSessionPrefix + sid)
 	if err != nil {
-		s, err := service.ReadSessionByID(bson.ObjectIdHex(sid))
+		s, err := service.ReadSessionByUUID(sid)
 		if err == nil {
 			err = env.GetCache().Set(constant.UserSessionPrefix+sid, s.UserID.Hex(), constant.SessionExpires)
 		}
