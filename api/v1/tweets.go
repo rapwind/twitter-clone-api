@@ -91,10 +91,11 @@ func getTweets(c *gin.Context) {
 	// Get parameters
 	_, limit := utils.GetRangeParams(c, constant.DefaultLimitGetTweets)
 	maxID := utils.GetObjectIDParam(c, "maxId")
+	sinceID := utils.GetObjectIDParam(c, "sinceId")
 	following, _ := validator.Bool{}.Check(c.Request.FormValue("following"))
 	q := c.Request.FormValue("q")
 
-	ts, err := service.ReadTweetDetails(limit, maxID, userID, following, q)
+	ts, err := service.ReadTweetDetails(limit, maxID, sinceID, userID, following, q)
 	if err != nil {
 		errors.Send(c, err)
 		return
