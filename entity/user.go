@@ -43,11 +43,11 @@ type (
 
 	// UserRegisterRequest ... structure of a user register request
 	UserRegisterRequest struct {
-		Name         string `json:"name"         bson:"name"         validate:"min=1"`
-		ScreenName   string `json:"screenName"   bson:"screenName"   validate:"min=1"`
-		PhoneNumber  string `json:"phoneNumber"  bson:"phoneNumber"  validate:"min=1"`
-		Email        string `json:"email"        bson:"email"        validate:"min=1"`
-		PasswordHash string `json:"passwordHash" bson:"passwordHash" validate:"min=1"`
+		Name         string `json:"name"`
+		ScreenName   string `json:"screenName"`
+		PhoneNumber  string `json:"phoneNumber"`
+		Email        string `json:"email"`
+		PasswordHash string `json:"passwordHash"`
 	}
 )
 
@@ -71,15 +71,6 @@ func initUsersCollection() {
 
 	err = users.EnsureIndex(mgo.Index{
 		Key:        []string{"screenName"},
-		Unique:     true,
-		DropDups:   false,
-		Background: true,
-		Sparse:     true,
-	})
-	env.AssertErrForInit(err)
-
-	err = users.EnsureIndex(mgo.Index{
-		Key:        []string{"phoneNumber"},
 		Unique:     true,
 		DropDups:   false,
 		Background: true,
