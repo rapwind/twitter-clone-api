@@ -70,7 +70,7 @@ func (rel *Release) Init() (err error) {
 
 	// AWS Configurations
 	rel.awsConfig = &aws.Config{
-		Credentials:            credentials.NewStaticCredentials("AKIAJ36RD7B6AM3JWFTA", "CPEmcV/QLmQDnpQvICOoIDC2uhz4Mmq+AE0MsrSv", ""),
+		Credentials:            credentials.NewStaticCredentials("AKIAIJNN2OVMBFRGDN6Q", "HOQLaMmo/rEuOunKqqNwtPXg4KWqdOwFfuqH9FMN", ""),
 		Endpoint:               aws.String(""),
 		Region:                 aws.String("us-east-1"),
 		DisableSSL:             aws.Bool(false),
