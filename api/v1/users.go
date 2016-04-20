@@ -51,7 +51,7 @@ func registerUser(c *gin.Context) {
 	// create user account
 	err = service.CreateUser(u)
 	if err != nil {
-		errors.Send(c, errors.BadParams("screenName", u.ScreenName))
+		errors.Send(c, err)
 		return
 	}
 
