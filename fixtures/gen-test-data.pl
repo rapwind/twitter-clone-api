@@ -2,7 +2,7 @@
 
 ##
 ## Usage:
-## $ perl gen-test-data.pl
+## $ perl gen-test-data.pl | mongo >/dev/null
 ##
 
 use utf8;
@@ -38,6 +38,7 @@ my $IMAGES = [
 
 # open(my $mongo, '| mongo 1>/dev/null');
 open(my $mongo, '>/dev/stdout');
+binmode($mongo, ":utf8");
 
 print {$mongo} <<"__HEADER__";
 use poppo
@@ -53,7 +54,7 @@ __HEADER__
 my $users = {};
 my $tweets = [];
 foreach my $i (0 .. $USERS-1) {
-    print "Generating user #$i and tweets...\n";
+    print {*STDERR} "Generating user #$i and tweets...\n";
 
     my($uid, $screenName) = genUser($mongo, $i);
     $$users{$uid} = $screenName;
@@ -166,7 +167,7 @@ db.follow.ensureIndex({userId:1, targetId:1}, {unique:true, dropDups:true, backg
 __HEADER__
 
     foreach my $userId (sort keys %$users) {
-        print "Generating follows for $userId...\n";
+        print {*STDERR} "Generating follows for $userId...\n";
 
         my %fs = ();
         while (scalar(keys %fs) < $FOLLOWS_PER_USER) {
@@ -194,7 +195,7 @@ db.like.ensureIndex({userId:1, tweetId:1}, {unique:true, dropDups:true, backgrou
 __HEADER__
 
     foreach my $userId (sort keys %$users) {
-        print "Generating likes for $userId...\n";
+        print {*STDERR} "Generating likes for $userId...\n";
 
         my %ls = ();
         while (scalar(keys %ls) < $LIKES_PER_USER) {
