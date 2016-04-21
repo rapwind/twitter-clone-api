@@ -60,17 +60,15 @@ my $IMAGES = [
 
 $| = 1;
 my $users = genUsers('users.json');
-my $tweets = genTweets('tweets.json', $users);
+my $userTweets = genTweets('tweets.json', $users);
 genFollows('follows.json', $users);
-genLikes('likes.json', $users, $tweets);
+genLikes('likes.json', $users, $userTweets);
 
 exit;
 
 sub genUsers {
     my $fname = shift;
     my %users;
-
-    my $unit = int($USERS / 50);
 
     open(my $fh, '>:utf8', $fname) or die "Cannot open $fname: $!";
 
@@ -83,7 +81,7 @@ sub genUsers {
 
         $users{$userId} = $screenName;
 
-        printf "%s: Generating users ... %.2f %%\n", localtime()."", (100.0 * $i / $USERS) if $i % $unit == 0;
+        printf "%s: Generating users ... %.2f %%\n", ptime(), (100.0 * $i / $USERS) if $i % 10000 == 0;
 
         print {$fh} JSON(
             '_id'                       => ['objectId', $userId],
@@ -107,8 +105,11 @@ sub genUsers {
 
 sub genTweets {
     my($fname, $users) = @_;
-    my @uids = sort keys %$users;
-    my %tweets;
+    my @uids = keys %$users;
+    my @userTweets;
+    #my %tweets;
+
+    $#userTweets = $#uids;
 
     open(my $fh, '>:utf8', $fname) or die "Cannot open $fname: $!";
 
@@ -116,10 +117,12 @@ sub genTweets {
         my $userId = $uids[$i];
         my $n = int(rand($MAX_TWEETS - $MIN_TWEETS) + $MIN_TWEETS);
 
-        printf "%s: Generating tweets of user %.4f %%\n", localtime()."", (100.0*$i/$USERS) if $i % 10 == 0;
+        $userTweets[$i] = $n;
 
-        foreach (1 .. $n) {
-            my $id = BSON::ObjectId->new;
+        printf "%s: Generating tweets %.2f %%\n", ptime(), (100.0*$i/$USERS) if $i % 1000 == 0;
+
+        foreach my $j (0 .. $n-1) {
+            my $id = getTweetId($i, $j);
             my $text = mkSentence();
             my $createdAt = genTime();
 
@@ -129,9 +132,16 @@ sub genTweets {
             $contentUrl = choose($IMAGES) if rand() < 0.2; # Tweet+image with prob. 0.2
 
             my $inReplyToTweetId;
-            if(scalar(keys %tweets) > 0 && rand() < 0.5) { # Reply with prob. 0.5
-                $inReplyToTweetId = choose([keys %tweets]);
-                my $inReplyToUserId = $tweets{$inReplyToTweetId};
+            if (($i != 0 || $j != 0) && rand() < 0.5) { # Reply with prob. 0.5
+                my $ui = int(rand($i+1));
+                my $ti;
+                if ($ui == $i) {
+                    $ti = int(rand($j));
+                } else {
+                    $ti = int(rand($userTweets[$ui]));
+                }
+                $inReplyToTweetId = getTweetId($ui, $ti);
+                my $inReplyToUserId = $uids[$ui];
                 my $inReplyToScreenName = $$users{$inReplyToUserId};
                 $text = "\@$inReplyToScreenName $text";
             }
@@ -144,14 +154,12 @@ sub genTweets {
                 'inReplyToTweetId' => ['objectId', $inReplyToTweetId],
                 'createdAt'        => ['date', $createdAt]
             ), "\n";
-
-            $tweets{$id} = $userId;
         }
     }
 
     close($fh);
 
-    return \%tweets;
+    return \@userTweets;
 }
 
 sub genFollows {
@@ -165,7 +173,7 @@ sub genFollows {
         my $n = int(rand($MAX_FOLLOWS - $MIN_FOLLOWS) + $MIN_FOLLOWS);
         $n = $#{$uids} if $n > $#{$uids};
 
-        printf "%s: Generating folllows of user %.4f %%\n", localtime()."", (100.0*$i/$USERS) if $i % 10 == 0;
+        printf "%s: Generating folllows %.2f %%\n", ptime(), (100.0*$i/$USERS) if $i % 1000 == 0;
 
         my(%seen, $count);
         $count = 0;
@@ -189,34 +197,35 @@ sub genFollows {
 }
 
 sub genLikes {
-    my($fname, $users, $tweets) = @_;
+    my($fname, $users, $userTweets) = @_;
     my $uids = [keys %$users];
-    my $tids = [keys %$tweets];
 
     open(my $fh, '>:utf8', $fname) or die "Cannot open $fname: $!";
 
     foreach my $i (0 .. $USERS-1) {
         my $userId = $$uids[$i];
         my $n = int(rand($MAX_LIKES - $MIN_LIKES) + $MIN_LIKES);
-        $n = scalar(@$tids) if $n > scalar(@$tids);
 
-        printf "%s: Generating likes of user %.4f %%\n", localtime()."", (100.0*$i/$USERS) if $i % 10 == 0;
+        printf "%s: Generating likes %.2f %%\n", ptime(), (100.0*$i/$USERS) if $i % 1000 == 0;
 
         my(%seen, $count);
         $count = 0;
         while ($count < $n) {
-             my $tweetId = choose($tids);
-             my $key = $userId . $tweetId;
-             next if exists $seen{$key};
-             $seen{$key} = 1;
-             ++$count;
+            my $ui = int(rand($USERS));
+            my $ti = int(rand($$userTweets[$ui]));
+            my $tweetId = getTweetId($ui, $ti);
 
-             print {$fh} JSON(
-                '_id'       => ['objectId', BSON::ObjectId->new],
-                'userId'    => ['objectId', $userId],
-                'tweetId'   => ['objectId', $tweetId],
-                'createdAt' => ['date', genTime()]
-             ), "\n";
+            my $key = $userId . $tweetId;
+            next if exists $seen{$key};
+            $seen{$key} = 1;
+            ++$count;
+
+            print {$fh} JSON(
+               '_id'       => ['objectId', BSON::ObjectId->new],
+               'userId'    => ['objectId', $userId],
+               'tweetId'   => ['objectId', $tweetId],
+               'createdAt' => ['date', genTime()]
+            ), "\n";
         }
     }
 
@@ -278,4 +287,18 @@ sub choose {
 sub time2iso8061 {
     my($sec, $min, $hour, $mday, $mon, $year) = gmtime(shift);
     return sprintf("%04d-%02d-%02dT%02d:%02d:%02d+09:00", $year+1900, $mon+1, $mday, $hour, $min, $sec);
+}
+
+sub getTweetId {
+    my($ui, $ti) = @_;
+    my $id = ($ti + 1) * $USERS + $ui;
+    return sprintf('%024x', $id);
+}
+
+sub ptime {
+    my $t = time() - $^T;
+    my $sec = $t % 60;
+    my $min = int($t / 60) % 60;
+    my $hour = int($t / 3600);
+    return sprintf('%d:%02d:%02d', $hour, $min, $sec);
 }
