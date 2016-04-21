@@ -1,12 +1,13 @@
 package service
 
 import (
-	"github.com/techcampman/twitter-d-server/entity"
-	"github.com/techcampman/twitter-d-server/env"
 	"fmt"
 	"sync"
-	"gopkg.in/mgo.v2"
+
+	"github.com/techcampman/twitter-d-server/entity"
+	"github.com/techcampman/twitter-d-server/env"
 	"github.com/techcampman/twitter-d-server/logger"
+	"gopkg.in/mgo.v2"
 )
 
 func sendNotificationForUser(u *entity.User, n *entity.Notification) (err error) {
@@ -24,7 +25,7 @@ func sendNotificationForUser(u *entity.User, n *entity.Notification) (err error)
 	}()
 
 	for _, s := range ss {
-		go func(t entity.Session) {
+		go func(s entity.Session) {
 			defer wg.Done()
 
 			i, err := ReadInstallationByID(s.InstallationID)
@@ -37,7 +38,7 @@ func sendNotificationForUser(u *entity.User, n *entity.Notification) (err error)
 			installationsChan <- i
 		}(s)
 	}
-	LOOP:
+LOOP:
 	for {
 		select {
 		case <-finChan:
