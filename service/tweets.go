@@ -285,7 +285,7 @@ func readTweetDetailWithoutReplyByTweet(t entity.Tweet, loginUserID bson.ObjectI
 	go func(id bson.ObjectId) {
 		defer wg.Done()
 
-		u, err := ReadUserDetailByID(id)
+		u, err := ReadUserDetailByID(id, loginUserID)
 		if err != nil {
 			errChan <- err
 			return
@@ -363,8 +363,7 @@ func ReadLikedCountByTweetID(id bson.ObjectId) (likedCount int, err error) {
 	return
 }
 
-// ReadTweetsCountsByUser gets entity.UserDetail.TweetsCount and LikesCount
-func ReadTweetsCountsByUser(u entity.User) (tweetsCount int, likesCount int, err error) {
+func readTweetsCountsByUserID(uid bson.ObjectId) (tweetsCount int, likesCount int, err error) {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
@@ -394,7 +393,7 @@ func ReadTweetsCountsByUser(u entity.User) (tweetsCount int, likesCount int, err
 			return
 		}
 		tweetsCountChan <- c
-	}(u.ID)
+	}(uid)
 
 	go func(id bson.ObjectId) {
 		defer wg.Done()
@@ -406,13 +405,13 @@ func ReadTweetsCountsByUser(u entity.User) (tweetsCount int, likesCount int, err
 		}
 		defer likes.Close()
 
-		c, err := likes.Find(bson.M{"userId": u.ID}).Count()
+		c, err := likes.Find(bson.M{"userId": id}).Count()
 		if err != nil {
 			errChan <- err
 			return
 		}
 		likesCountChan <- c
-	}(u.ID)
+	}(uid)
 
 LOOP:
 	for {
