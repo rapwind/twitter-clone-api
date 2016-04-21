@@ -59,9 +59,9 @@ func registerUser(c *gin.Context) {
 }
 
 func getUser(c *gin.Context) {
-	_, u := getLoginUserIDAndTargetUser(c)
+	l, u := getLoginUserIDAndTargetUser(c)
 
-	ud, err := service.ReadUserDetailByID(u.ID)
+	ud, err := service.ReadUserDetailByID(u.ID, l)
 	if err != nil {
 		errors.Send(c, err)
 		return
@@ -101,7 +101,7 @@ func undoFollow(c *gin.Context) {
 }
 
 func getFollowing(c *gin.Context) {
-	_, u := getLoginUserIDAndTargetUser(c)
+	l, u := getLoginUserIDAndTargetUser(c)
 	offset, limit := utils.GetRangeParams(c, constant.DefaultLimitGetFollows)
 
 	flws, err := service.ReadFollowingByID(u.ID, offset, limit)
@@ -112,7 +112,7 @@ func getFollowing(c *gin.Context) {
 
 	users := make([]*entity.UserDetail, len(flws))
 	for i, v := range flws {
-		users[i], err = service.ReadUserDetailByID(v.TargetID)
+		users[i], err = service.ReadUserDetailByID(v.TargetID, l)
 		if err != nil {
 			errors.Send(c, err)
 			return
@@ -123,7 +123,7 @@ func getFollowing(c *gin.Context) {
 }
 
 func getFollower(c *gin.Context) {
-	_, u := getLoginUserIDAndTargetUser(c)
+	l, u := getLoginUserIDAndTargetUser(c)
 	offset, limit := utils.GetRangeParams(c, constant.DefaultLimitGetFollows)
 
 	flws, err := service.ReadFollowerByID(u.ID, offset, limit)
@@ -134,7 +134,7 @@ func getFollower(c *gin.Context) {
 
 	users := make([]*entity.UserDetail, len(flws))
 	for i, v := range flws {
-		users[i], err = service.ReadUserDetailByID(v.UserID)
+		users[i], err = service.ReadUserDetailByID(v.UserID, l)
 		if err != nil {
 			errors.Send(c, err)
 			return

@@ -16,6 +16,7 @@ type (
 		UUID        string        `json:"id"                    bson:"uuid"`
 		ClientType  string        `json:"clientType"            bson:"clientType"`
 		DeviceToken string        `json:"deviceToken,omitempty" bson:"deviceToken,omitempty"`
+		ArnEndpoint string        `json:"arnEndpoint,omitempty" bson:"arnEndpoint,omitempty"`
 		CreatedAt   time.Time     `json:"createdAt"             bson:"createdAt"`
 		UpdatedAt   time.Time     `json:"updatedAt"             bson:"updatedAt"`
 	}

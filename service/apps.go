@@ -56,6 +56,19 @@ func UpdateInstallation(i *entity.Installation) (err error) {
 	return
 }
 
+// ReadInstallationByID gets "entity.Installation" data
+func ReadInstallationByID(id bson.ObjectId) (i *entity.Installation, err error) {
+	installations, err := collection.Installations()
+	if err != nil {
+		return
+	}
+	defer installations.Close()
+
+	i = new(entity.Installation)
+	err = installations.Find(bson.M{"_id": id}).One(i)
+	return
+}
+
 // ReadInstallationByUUID gets "entity.Installation" data
 func ReadInstallationByUUID(uuid string) (i *entity.Installation, err error) {
 	installations, err := collection.Installations()

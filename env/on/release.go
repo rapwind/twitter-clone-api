@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/techcampman/twitter-d-server/bridge"
 	"github.com/techcampman/twitter-d-server/db"
 	"github.com/techcampman/twitter-d-server/db/mongo"
 	"github.com/techcampman/twitter-d-server/db/redis"
@@ -24,6 +25,7 @@ type Release struct {
 	*mongo.DB
 	db.Cache
 	db.Storage
+	bridge.PushMessage
 	accessLogger   io.Writer
 	activityLogger io.Writer
 	goEnv          string
@@ -70,7 +72,7 @@ func (rel *Release) Init() (err error) {
 
 	// AWS Configurations
 	rel.awsConfig = &aws.Config{
-		Credentials:            credentials.NewStaticCredentials("AKIAJ36RD7B6AM3JWFTA", "CPEmcV/QLmQDnpQvICOoIDC2uhz4Mmq+AE0MsrSv", ""),
+		Credentials:            credentials.NewStaticCredentials("AKIAIJNN2OVMBFRGDN6Q", "HOQLaMmo/rEuOunKqqNwtPXg4KWqdOwFfuqH9FMN", ""),
 		Endpoint:               aws.String(""),
 		Region:                 aws.String("us-east-1"),
 		DisableSSL:             aws.Bool(false),
@@ -86,6 +88,8 @@ func (rel *Release) Init() (err error) {
 	if err != nil {
 		return err
 	}
+	// PushMessage - currently AWS SNS
+	rel.PushMessage = bridge.NewPushMessageBySNS(rel.awsConfig)
 
 	return
 }
@@ -128,4 +132,9 @@ func (rel *Release) GetStorage() db.Storage {
 // GetStorageURL get a storage URL
 func (rel *Release) GetStorageURL() *url.URL {
 	return rel.storageURL
+}
+
+// GetPushMessage get a push message service
+func (rel *Release) GetPushMessage() bridge.PushMessage {
+	return rel.PushMessage
 }

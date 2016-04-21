@@ -53,6 +53,18 @@ func ReadSessionByUUID(uuid string) (s *entity.Session, err error) {
 	return
 }
 
+// ReadSessionsByUser gets "entity.Session" list
+func ReadSessionsByUser(user *entity.User) (ss []entity.Session, err error) {
+	sessions, err := collection.Sessions()
+	if err != nil {
+		return
+	}
+	defer sessions.Close()
+
+	err = sessions.Find(bson.M{"userId": user.ID}).All(ss)
+	return
+}
+
 // RemoveSessionByID deletes a document on follow collection
 func RemoveSessionByID(id bson.ObjectId) (err error) {
 	sessions, err := collection.Sessions()

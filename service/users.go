@@ -44,17 +44,74 @@ func CreateUser(u *entity.User) (err error) {
 }
 
 // ReadUserDetailByID returns UserDetail by user ID
-func ReadUserDetailByID(id bson.ObjectId) (ud *entity.UserDetail, err error) {
-	u, err := ReadUserByID(id)
-	if err != nil {
-		return
-	}
-	ud = new(entity.UserDetail)
-	ud.User = u
-	if err := AppendCounterToUserDetail(ud); err != nil {
-		logger.Error(err)
-	}
+func ReadUserDetailByID(id bson.ObjectId, l bson.ObjectId) (ud *entity.UserDetail, err error) {
+	var wg sync.WaitGroup
+	wg.Add(3)
 
+	finChan := make(chan bool)
+	errChan := make(chan error)
+	userChan := make(chan *entity.User)
+	followingChan := make(chan bool)
+	countsChan := make(chan *entity.UserDetail)
+
+	ud = new(entity.UserDetail)
+
+	go func() {
+		wg.Wait()
+		finChan <- true
+	}()
+
+	go func(ud *entity.UserDetail) {
+		defer wg.Done()
+
+		u, err := ReadUserByID(id)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		userChan <- u
+	}(ud)
+
+	go func(id bson.ObjectId, l bson.ObjectId) {
+		defer wg.Done()
+
+		f := entity.Follow{
+			UserID:   l,
+			TargetID: id,
+		}
+		followingChan <- checkFollowing(&f)
+	}(id, l)
+
+	go func(id bson.ObjectId) {
+		defer wg.Done()
+
+		u := &entity.User{ID: id}
+		d := &entity.UserDetail{User: u}
+		fmt.Println(d)
+		if err := AppendCounterToUserDetail(d); err != nil {
+			errChan <- err
+			return
+		}
+		countsChan <- d
+	}(id)
+
+LOOP:
+	for {
+		select {
+		case <-finChan:
+			break LOOP
+		case err = <-errChan:
+			return
+		case ud.User = <-userChan:
+		case f := <-followingChan:
+			ud.Following = &f
+		case d := <-countsChan:
+			ud.TweetsCount = d.TweetsCount
+			ud.LikesCount = d.LikesCount
+			ud.FollowerCount = d.FollowerCount
+			ud.FollowingCount = d.FollowingCount
+		}
+	}
 	return
 }
 
@@ -75,20 +132,20 @@ func AppendCounterToUserDetail(ud *entity.UserDetail) (err error) {
 		finChan <- true
 	}()
 
-	go func(u *entity.User) {
+	go func(id bson.ObjectId) {
 		defer wg.Done()
-		tc, lc, err := ReadTweetsCountsByUser(*u)
+		tc, lc, err := readTweetsCountsByUserID(id)
 		if err != nil {
 			errChan <- err
 			return
 		}
 		tweetsCountChan <- tc
 		likesCountChan <- lc
-	}(ud.User)
+	}(ud.ID)
 
 	go func(id bson.ObjectId) {
 		defer wg.Done()
-		fgc, fwc, err := ReadFollowsCountsByID(id)
+		fgc, fwc, err := readFollowsCountsByID(id)
 		if err != nil {
 			errChan <- err
 			return
@@ -172,8 +229,7 @@ func ReadFollowerByID(id bson.ObjectId, offset int, limit int) (flws []entity.Fo
 	return
 }
 
-// ReadFollowsCountsByID gets entity.UserDetail.FollowingCount and FollowerCount
-func ReadFollowsCountsByID(id bson.ObjectId) (followingCount int, followerCount int, err error) {
+func readFollowsCountsByID(id bson.ObjectId) (followingCount int, followerCount int, err error) {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
@@ -238,11 +294,11 @@ LOOP:
 
 // CreateFollow creates "entity.Follow" data
 func CreateFollow(f *entity.Follow) (err error) {
-	if err := CheckRequiredForFollowing(f); err != nil {
+	if err := checkRequiredForFollowing(f); err != nil {
 		return errors.BadParams("follow", "invalid")
 	}
 
-	if CheckFollowing(f) {
+	if checkFollowing(f) {
 		err = errors.DataConflict()
 		return
 	}
@@ -267,7 +323,7 @@ func CreateFollow(f *entity.Follow) (err error) {
 
 // RemoveFollow deletes a document on follow collection
 func RemoveFollow(f *entity.Follow) (err error) {
-	if err := CheckRequiredForFollowing(f); err != nil {
+	if err := checkRequiredForFollowing(f); err != nil {
 		return errors.BadParams("follow", "invalid")
 	}
 
@@ -286,8 +342,8 @@ func RemoveFollow(f *entity.Follow) (err error) {
 	return
 }
 
-// CheckFollowing already checks a follow status
-func CheckFollowing(f *entity.Follow) (followed bool) {
+// checkFollowing already checks a follow status
+func checkFollowing(f *entity.Follow) (followed bool) {
 
 	follows, err := collection.Follows()
 	if err != nil {
@@ -304,8 +360,8 @@ func CheckFollowing(f *entity.Follow) (followed bool) {
 	return n > 0
 }
 
-// CheckRequiredForFollowing checks required fields of Follow
-func CheckRequiredForFollowing(f *entity.Follow) error {
+// checkRequiredForFollowing checks required fields of Follow
+func checkRequiredForFollowing(f *entity.Follow) error {
 	if !f.UserID.Valid() {
 		return fmt.Errorf("invalid userId")
 	}
