@@ -6,6 +6,7 @@ import (
 
 	"net/url"
 
+	"github.com/techcampman/twitter-d-server/bridge"
 	"github.com/techcampman/twitter-d-server/db"
 	"github.com/techcampman/twitter-d-server/db/mongo"
 	"github.com/techcampman/twitter-d-server/env/on"
@@ -41,6 +42,9 @@ type Environment interface {
 
 	// GetStorageURL get a storage URL
 	GetStorageURL() *url.URL
+
+	// GetPushMessage get a AWS SNS
+	GetPushMessage() bridge.PushMessage
 }
 
 // Env initialized poppo-api environment
@@ -111,4 +115,9 @@ func GetStorage() db.Storage {
 // GetStorageURL get a storage URL
 func GetStorageURL() *url.URL {
 	return env.GetStorageURL()
+}
+
+// GetPushMessage get a push message service
+func GetPushMessage() bridge.PushMessage {
+	return env.GetPushMessage()
 }

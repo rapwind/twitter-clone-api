@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/techcampman/twitter-d-server/bridge"
 	"github.com/techcampman/twitter-d-server/db"
 	"github.com/techcampman/twitter-d-server/db/mongo"
 	"github.com/techcampman/twitter-d-server/db/redis"
@@ -24,6 +25,7 @@ type Local struct {
 	*mongo.DB
 	db.Cache
 	db.Storage
+	bridge.PushMessage
 	accessLogger   io.Writer
 	activityLogger io.Writer
 	goEnv          string
@@ -85,6 +87,8 @@ func (lo *Local) Init() (err error) {
 	if err != nil {
 		return err
 	}
+	// PushMessage - currently AWS SNS
+	lo.PushMessage = bridge.NewPushMessageBySNS(lo.awsConfig)
 
 	return
 }
@@ -127,4 +131,9 @@ func (lo *Local) GetStorage() db.Storage {
 // GetStorageURL get a storage URL
 func (lo *Local) GetStorageURL() *url.URL {
 	return lo.storageURL
+}
+
+// GetPushMessage get a push message service
+func (lo *Local) GetPushMessage() bridge.PushMessage {
+	return lo.PushMessage
 }
