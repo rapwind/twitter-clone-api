@@ -2,17 +2,35 @@
 
 ##
 ## Usage:
-## $ perl gen-test-data.pl
-##
+##  perl gen-test-data.pl
+##  I="mongoimport -h ds023560.mlab.com:23560 -u USERNAME -p PASSWORD -d poppo-mongo-dev --type json"
+##  $I -c user --file users.json
+##  $I -c tweet --file tweets.json
+##  $I -c follow --file follows.json
+##  $I -c like --file likes.json
 
 use utf8;
 use strict;
 use warnings;
+use BSON;
 
-my $USERS = 100; # the number of users
-my $TWEETS_PER_USER = 100;
-my $FOLLOWS_PER_USER = 10;
-my $LIKES_PER_USER = 100;
+##
+## Settings
+##
+
+my $USERS = 400000; # the number of users
+my $MAX_TWEETS = 99; # the max number of tweets per a user
+my $MIN_TWEETS = 0; # the min number of tweets per a user
+my $MAX_FOLLOWS = 99; # the max number of following users per a user
+my $MIN_FOLLOWS = 0; # the min number of following users per a user
+my $MAX_LIKES = 99; # the max number of liked tweets per a user
+my $MIN_LIKES = 0; # the min number of liked tweets per a user
+my $MAX_TIME = time();
+my $MIN_TIME = $MAX_TIME - 5 * 365 * 24 * 60 * 60; # 5 years ago
+
+##
+## Source data
+##
 
 my $SCREENS = [qw(foo baz bar hoge fuga xyz abc)];
 my $NAMES = [qw(鈴木 佐藤 田中 中村 山本 伊藤 小林 高橋 吉田 加藤 山田 松本 井上 山口 林 木村 佐々木 橋本 清水 山下 森 石川 阿部 齋藤
@@ -25,9 +43,13 @@ my $NAMES = [qw(鈴木 佐藤 田中 中村 山本 伊藤 小林 高橋 吉田 �
                 川村 菅野 大橋 大谷 小田 星野 石橋 秋山 中西 本間 平井 鎌田 内藤 松村 小西 荒木 白石 望月 栗原 澤田 福井 早川 松原
                 上原 三宅 宮田 伊東 岩崎 大森 荒井 横田 内山 片山 中嶋 小澤)];
 my $NOUN = [@$NAMES, qw(うさぎ カメ 馬)];
-my $SITUATION = [qw(竹ぼうきで スカイリムで ポケモンで パソコンで ラケットで バールのようなもので 愛車の中で 愛馬に跨って 丸亀製麺で 製鉄所で 鉱山で 会社の中で 東京駅で 渋谷駅で)];
-my $MODIFIER = [qw(勇敢に 元気に 少し 大きく 豪快に 繊細に 愉快に 優雅に エレガントに ゆっくりと 急いで モリモリと さっそうと あえて 断腸の思いで)];
-my $VERB = [qw(遊んだ 立ち上がるぞ 驚きを隠せない 考えまーす 感じた ひらめいた 思いついた 讃岐うどんを食べた 玉子焼きを作ったなう 腹パンなう ゴミ箱を蹴った 殴られた ジャンプしてる〜)];
+my $SITUATION = [qw(竹ぼうきで スカイリムで ポケモンで パソコンで ラケットで フォークで スプーンで バールのようなもので
+                    愛車の中で 愛馬に跨って 丸亀製麺で ジェットコースターに乗りながら 人混みの中で
+                    製鉄所で 鉱山で 会社の中で 東京駅で 渋谷駅で バス停で スタバで カフェで)];
+my $MODIFIER = [qw(勇敢に 元気に 少し 大きく 豪快に 繊細に 愉快に 優雅に エレガントに ゆっくりと 急いで モリモリと さっそうと あえて
+                   断腸の思いで まるっと グイッと)];
+my $VERB = [qw(遊んだ 立ち上がるぞ 驚きを隠せない 考えまーす 感じた ひらめいた 思いついた 讃岐うどんを食べた 玉子焼きを作ったなう
+               腹パンなう ゴミ箱を蹴った 殴られた ジャンプしてる〜)];
 my $KAOMOJI = ["(*´ω｀*)", "(´・ω・｀)", "(*´∀｀)", "٩(ˊᗜˋ*)و", "╭( ･ㅂ･)و", "✌(՞ਊ՞✌三✌՞ਊ՞)✌", "(๑◔‿◔๑)", "~(  ~´･_･`)~", "ヽ(･ω･)ﾉ♡", "₍₍ (̨̡ ‾᷄⌂‾᷅)̧̢ ₎₎", "૮(꒦ິཅ꒦ິ)ა"];
 my $IMAGES = [
     'https://img.esa.io/uploads/production/attachments/15/2016/04/15/9376/6d8296c6-b702-49f3-b655-777fce676214.png',
@@ -36,180 +58,203 @@ my $IMAGES = [
     'http://i.gyazo.com/9f18122c37fdfa3af5cc10a45df10404.png',
     'http://optipng.sourceforge.net/pngtech/img/lena.png'];
 
-# open(my $mongo, '| mongo 1>/dev/null');
-open(my $mongo, '>/dev/stdout');
-
-print {$mongo} <<"__HEADER__";
-use poppo
-db.user.drop()
-db.tweet.drop()
-db.follow.drop()
-db.like.drop()
-__HEADER__
-
-##
-## Generate users & user tweets
-##
-my $users = {};
-my $tweets = [];
-foreach my $i (0 .. $USERS-1) {
-    print "Generating user #$i and tweets...\n";
-
-    my($uid, $screenName) = genUser($mongo, $i);
-    $$users{$uid} = $screenName;
-    genUserTweet($mongo, $uid, $users, $tweets);
-}
-
-##
-## Generate follows
-##
-print "Generating follows...\n";
-genFollows($mongo, $users);
-
-##
-## Generate likes
-##
-print "Generating likes...\n";
-genLikes($mongo, $users, $tweets);
-
-close($mongo);
+$| = 1;
+my $users = genUsers('users.json');
+my $userTweets = genTweets('tweets.json', $users);
+genFollows('follows.json', $users);
+genLikes('likes.json', $users, $userTweets);
 
 exit;
 
-sub genUser {
-    my($mongo, $i) = @_;
+sub genUsers {
+    my $fname = shift;
+    my %users;
 
-    my $uid = "uid$i";
-    my $name = mkUserName();
-    my $screenName = mkScreenName($i);
-    my $profileImageUrl = sprintf("http://www.beiz.jp/web/images_P/paint/xpaint_00%03d.jpg.pagespeed.ic.59qDQNa_Nn.webp", $i % 391);
-    my $bib = mkSentence();
-    my $createdAt = time2iso8061(time() - ($USERS - $i) * 3600);
+    open(my $fh, '>:utf8', $fname) or die "Cannot open $fname: $!";
 
-    # password = 1234 (http://hayam.in/scrypt/)
-    print {$mongo} <<"__USER__";
-var uid$i = ObjectId()
-db.user.insert({
-  _id: $uid,
-  name:"$name",
-  screenName:"$screenName",
-  email: "$screenName\@example.com",
-  passwordHash:"7c1e081b170becf92e33fd001769afa73307a5c0889498671ccdf0ab0ff35646",
-  profileImageUrl:"$profileImageUrl",
-  biography:"$bib",
-  url:"http://example.com/",
-  createdAt:new Date("$createdAt"),
-  updatedAt:new Date("$createdAt")
-})
-__USER__
+    foreach my $i (0 .. $USERS-1) {
+        my $userId = BSON::ObjectId->new;
+        my $screenName = mkScreenName($i);
+        my $bgUrl = sprintf("http://www.beiz.jp/web/images_P/paint/xpaint_00%03d.jpg.pagespeed.ic.59qDQNa_Nn.webp", $i % 391);
+        my $imageUrl = sprintf("http://pokemon.symphonic-net.com/%03d.gif", $i % 650);
+        my $createdAt = genTime();
 
-    return ($uid, $screenName);
+        $users{$userId} = $screenName;
+
+        printf "%s: Generating users ... %.2f %%\n", ptime(), (100.0 * $i / $USERS) if $i % 10000 == 0;
+
+        print {$fh} JSON(
+            '_id'                       => ['objectId', $userId],
+            'name'                      => ['string', mkUserName()],
+            'screenName'                => ['string', $screenName],
+            'passwordHash'              => ['string', '7c1e081b170becf92e33fd001769afa73307a5c0889498671ccdf0ab0ff35646'], # password = 1234
+            'email'                     => ['string', $screenName . '@example.com'],
+            'profileImageUrl'           => ['string', $imageUrl],
+            'profileBackgroundImageUrl' => ['string', $bgUrl],
+            'url'                       => ['string', 'http://example.com/'],
+            'biography'                 => ['string', mkSentence()],
+            'createdAt'                 => ['date', $createdAt],
+            'updatedAt'                 => ['date', $createdAt]
+        ), "\n";
+    }
+
+    close($fh);
+
+    return \%users;
 }
 
-sub genUserTweet {
-    my($mongo, $uid, $users, $tweets) = @_; # Mongo variable name that has a user ID
+sub genTweets {
+    my($fname, $users) = @_;
+    my @uids = keys %$users;
+    my @userTweets;
+    #my %tweets;
 
-    foreach my $i (0 .. $TWEETS_PER_USER-1) {
-        my $tid = "tid${i}_$uid";
-        my $text = mkSentence();
-        my $createdAt = time2iso8061(time() - ($TWEETS_PER_USER - $i) * 3600);
+    $#userTweets = $#uids;
 
-        if (length($text) > 140) {
-            die "over 140 characters";
+    open(my $fh, '>:utf8', $fname) or die "Cannot open $fname: $!";
+
+    foreach my $i (0 .. $USERS-1) {
+        my $userId = $uids[$i];
+        my $n = int(rand($MAX_TWEETS - $MIN_TWEETS) + $MIN_TWEETS);
+
+        $userTweets[$i] = $n;
+
+        printf "%s: Generating tweets %.2f %%\n", ptime(), (100.0*$i/$USERS) if $i % 1000 == 0;
+
+        foreach my $j (0 .. $n-1) {
+            my $id = getTweetId($i, $j);
+            my $text = mkSentence();
+            my $createdAt = genTime();
+
+            die "over 140 characters" if length($text) > 140;
+
+            my $contentUrl;
+            $contentUrl = choose($IMAGES) if rand() < 0.2; # Tweet+image with prob. 0.2
+
+            my $inReplyToTweetId;
+            if (($i != 0 || $j != 0) && rand() < 0.5) { # Reply with prob. 0.5
+                my $ui = int(rand($i+1));
+                my $ti;
+                if ($ui == $i) {
+                    $ti = int(rand($j));
+                } else {
+                    $ti = int(rand($userTweets[$ui]));
+                }
+                $inReplyToTweetId = getTweetId($ui, $ti);
+                my $inReplyToUserId = $uids[$ui];
+                my $inReplyToScreenName = $$users{$inReplyToUserId};
+                $text = "\@$inReplyToScreenName $text";
+            }
+
+            print {$fh} JSON(
+                '_id'              => ['objectId', $id],
+                'text'             => ['string', $text],
+                'contentUrl'       => ['string', $contentUrl],
+                'userId'           => ['objectId', $userId],
+                'inReplyToTweetId' => ['objectId', $inReplyToTweetId],
+                'createdAt'        => ['date', $createdAt]
+            ), "\n";
         }
-
-        my $contentUrl = "null"; # null in Mongo
-        if (rand() < 0.2) { # Tweet with an image with prob. 0.2
-            $contentUrl = '"' . choose($IMAGES) . '"';
-        }
-
-        if(scalar(@$tweets) > 0 && rand() < 0.5) { # Reply with prob. 0.5
-            my $inReplyToTweetId = choose($tweets);
-            my $inReplyToUserId = ( split(/_/, $inReplyToTweetId) )[1];
-            my $inReplyToScreenName = $$users{$inReplyToUserId};
-
-            print {$mongo} <<"__TWEET__";
-var $tid = ObjectId()
-db.tweet.insert({
-  _id: $tid,
-  text: "\@$inReplyToScreenName $text",
-  contentUrl: $contentUrl,
-  userId: $uid,
-  inReplyToTweetId: $inReplyToTweetId,
-  createdAt: new Date("$createdAt")
-})
-__TWEET__
-        } else { # No reply
-            print {$mongo} <<"__TWEET__";
-var $tid = ObjectId()
-db.tweet.insert({
-  _id: $tid,
-  text: "$text",
-  contentUrl: $contentUrl,
-  userId: $uid,
-  createdAt: new Date("$createdAt")
-})
-__TWEET__
-        }
-
-        push(@$tweets, $tid);
     }
+
+    close($fh);
+
+    return \@userTweets;
 }
 
 sub genFollows {
-    my($mongo, $users) = @_;
+    my($fname, $users) = @_;
+    my $uids = [keys %$users];
 
-    print {$mongo} <<"__HEADER__";
-db.follow.ensureIndex({userId:1, _id:-1}, {unique:false, dropDups:true, background:true, sparse:true})
-db.follow.ensureIndex({targetId:1, _id:-1}, {unique:false, dropDups:true, background:true, sparse:true})
-db.follow.ensureIndex({userId:1, targetId:1}, {unique:true, dropDups:true, background:true, sparse:true})
-__HEADER__
+    open(my $fh, '>:utf8', $fname) or die "Cannot open $fname: $!";
 
-    foreach my $userId (sort keys %$users) {
-        print "Generating follows for $userId...\n";
+    foreach my $i (0 .. $USERS-1) {
+        my $userId = $$uids[$i];
+        my $n = int(rand($MAX_FOLLOWS - $MIN_FOLLOWS) + $MIN_FOLLOWS);
+        $n = $#{$uids} if $n > $#{$uids};
 
-        my %fs = ();
-        while (scalar(keys %fs) < $FOLLOWS_PER_USER) {
-            my $targetId = choose([keys %$users]);
-            my $key = $userId . $targetId;
-            next if $userId eq $targetId || exists $fs{$key};
+        printf "%s: Generating folllows %.2f %%\n", ptime(), (100.0*$i/$USERS) if $i % 1000 == 0;
 
-            my $createdAt = time2iso8061(time() - ($FOLLOWS_PER_USER - scalar(keys %fs)) * 3600);
+        my(%seen, $count);
+        $count = 0;
+        while ($count < $n) {
+             my $targetId = choose($uids);
+             my $key = $userId . $targetId;
+             next if $userId eq $targetId || exists $seen{$key};
+             $seen{$key} = 1;
+             ++$count;
 
-            print {$mongo} <<"__FOLLOW__";
-db.follow.insert({ _id: ObjectId(), userId: $userId, targetId: $targetId, createdAt: new Date("$createdAt") });
-__FOLLOW__
-            $fs{$key} = 1;
+             print {$fh} JSON(
+                '_id'       => ['objectId', BSON::ObjectId->new],
+                'userId'    => ['objectId', $userId],
+                'targetId'  => ['objectId', $targetId],
+                'createdAt' => ['date', genTime()]
+             ), "\n";
         }
     }
+
+    close($fh);
 }
 
 sub genLikes {
-    my($mongo, $users, $tweets) = @_;
+    my($fname, $users, $userTweets) = @_;
+    my $uids = [keys %$users];
 
-    print {$mongo} <<"__HEADER__";
-db.like.ensureIndex({userId:1, _id:-1}, {unique:false, dropDups:true, background:true, sparse:true})
-db.like.ensureIndex({tweetId:1, _id:-1}, {unique:false, dropDups:true, background:true, sparse:true})
-db.like.ensureIndex({userId:1, tweetId:1}, {unique:true, dropDups:true, background:true, sparse:true})
-__HEADER__
+    open(my $fh, '>:utf8', $fname) or die "Cannot open $fname: $!";
 
-    foreach my $userId (sort keys %$users) {
-        print "Generating likes for $userId...\n";
+    foreach my $i (0 .. $USERS-1) {
+        my $userId = $$uids[$i];
+        my $n = int(rand($MAX_LIKES - $MIN_LIKES) + $MIN_LIKES);
 
-        my %ls = ();
-        while (scalar(keys %ls) < $LIKES_PER_USER) {
-            my $tweetId = choose($tweets);
+        printf "%s: Generating likes %.2f %%\n", ptime(), (100.0*$i/$USERS) if $i % 1000 == 0;
+
+        my(%seen, $count);
+        $count = 0;
+        while ($count < $n) {
+            my $ui = int(rand($USERS));
+            my $ti = int(rand($$userTweets[$ui]));
+            my $tweetId = getTweetId($ui, $ti);
+
             my $key = $userId . $tweetId;
-            next if exists $ls{$key};
+            next if exists $seen{$key};
+            $seen{$key} = 1;
+            ++$count;
 
-            my $createdAt = time2iso8061(time() - ($LIKES_PER_USER - scalar(keys %ls)) * 3600);
-
-            print {$mongo} <<"__LIKE__";
-db.like.insert({ _id: ObjectId(), userId: $userId, tweetId: $tweetId, createdAt: new Date("$createdAt") });
-__LIKE__
-            $ls{$key} = 1;
+            print {$fh} JSON(
+               '_id'       => ['objectId', BSON::ObjectId->new],
+               'userId'    => ['objectId', $userId],
+               'tweetId'   => ['objectId', $tweetId],
+               'createdAt' => ['date', genTime()]
+            ), "\n";
         }
     }
+
+    close($fh);
+}
+
+sub genTime {
+    my $t = int(rand($MAX_TIME - $MIN_TIME) + $MIN_TIME);
+    return time2iso8061($t);
+}
+
+sub JSON {
+    my %data = @_;
+    my @strs;
+    foreach my $key (sort keys %data) {
+        my($type, $val) = @{$data{$key}};
+        if (defined $val) {
+            if ($type eq 'objectId') {
+                push(@strs, "$key:ObjectId(\"$val\")");
+            } elsif ($type eq 'date') {
+                push(@strs, "$key:ISODate(\"$val\")");
+            } elsif ($type eq 'string') {
+                push(@strs, "$key:\"$val\"");
+            } else {
+                die "Unknown type $type";
+            }
+        }
+    }
+    return '{' . join(',', @strs) . '}';
 }
 
 sub mkUserName {
@@ -242,4 +287,18 @@ sub choose {
 sub time2iso8061 {
     my($sec, $min, $hour, $mday, $mon, $year) = gmtime(shift);
     return sprintf("%04d-%02d-%02dT%02d:%02d:%02d+09:00", $year+1900, $mon+1, $mday, $hour, $min, $sec);
+}
+
+sub getTweetId {
+    my($ui, $ti) = @_;
+    my $id = ($ti + 1) * $USERS + $ui;
+    return sprintf('%024x', $id);
+}
+
+sub ptime {
+    my $t = time() - $^T;
+    my $sec = $t % 60;
+    my $min = int($t / 60) % 60;
+    my $hour = int($t / 3600);
+    return sprintf('%d:%02d:%02d', $hour, $min, $sec);
 }
