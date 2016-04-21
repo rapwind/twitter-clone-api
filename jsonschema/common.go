@@ -13,6 +13,12 @@ var (
 		"maxLength": 64.0,
 	}
 
+	arnEndpoint = map[string]interface{}{
+		"type":      "string",
+		"minLength": 1.0,
+		"maxLength": 200.0,
+	}
+
 	name = map[string]interface{}{
 		"type":      "string",
 		"minLength": 1.0,

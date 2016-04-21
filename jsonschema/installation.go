@@ -29,6 +29,7 @@ var (
 		"type": "object",
 		"properties": map[string]interface{}{
 			"deviceToken": deviceToken,
+			"arnEndpoint": arnEndpoint,
 		},
 		"additionalProperties": false,
 	}
