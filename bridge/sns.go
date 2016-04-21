@@ -46,6 +46,12 @@ func NewPushMessageBySNS(c *aws.Config) *MessageBySNS {
 
 // Send ... send notification message
 func (s *MessageBySNS) Send(message string, deviceType string, targetArn string) (err error) {
+	if targetArn == "" {
+		return
+	}
+	if message == "" {
+		return
+	}
 	if deviceType != constant.DeviceTypeiOS {
 		err = s.sendPushNotification(message, targetArn)
 	}
