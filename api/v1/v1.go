@@ -75,6 +75,7 @@ func AddV1Endpoints(r *gin.Engine) {
 		}
 		notifications := v1.Group("/notifications")
 		{
+			notifications.GET("/count", getNotificationsCount)
 			notifications.Use(middleware.SetLoginUserIDIfNotEmpty())
 			notifications.GET("", getNotifications)
 		}

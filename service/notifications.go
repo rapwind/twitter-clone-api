@@ -186,6 +186,17 @@ func UpdateNotificationsUnread(userID bson.ObjectId, maxID bson.ObjectId, minID 
 	return
 }
 
+// ReadNotificationsCount counts the number of unread notifications.
+func ReadNotificationsCount(userID bson.ObjectId) (n int, err error) {
+	nots, err := collection.Notifications()
+	if err != nil {
+		return
+	}
+
+	n, err = nots.Find(bson.M{"userId": userID, "unread": true}).Count()
+	return
+}
+
 func sendNotificationForUser(u *entity.User, n *entity.PushNotification) (err error) {
 
 	ss, err := ReadSessionsByUser(u)

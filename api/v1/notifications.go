@@ -9,7 +9,20 @@ import (
 	"github.com/techcampman/twitter-d-server/logger"
 	"github.com/techcampman/twitter-d-server/service"
 	"github.com/techcampman/twitter-d-server/utils"
+	"gopkg.in/mgo.v2/bson"
 )
+
+func getNotificationsCount(c *gin.Context) {
+	loginUserID, _ := utils.GetLoginUserID(c)
+
+	n, err := service.ReadNotificationsCount(loginUserID)
+	if err != nil {
+		errors.Send(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, bson.M{"count": n})
+}
 
 func getNotifications(c *gin.Context) {
 	loginUserID, _ := utils.GetLoginUserID(c)
