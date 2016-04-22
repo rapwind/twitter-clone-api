@@ -12,6 +12,7 @@ import (
 	"github.com/techcampman/twitter-d-server/entity"
 	"github.com/techcampman/twitter-d-server/errors"
 	"github.com/techcampman/twitter-d-server/jsonschema"
+	"github.com/techcampman/twitter-d-server/logger"
 	"github.com/techcampman/twitter-d-server/service"
 	"github.com/techcampman/twitter-d-server/utils"
 	"gopkg.in/mgo.v2/bson"
@@ -80,6 +81,11 @@ func doFollow(c *gin.Context) {
 	if err := service.CreateFollow(f); err != nil {
 		errors.Send(c, err)
 		return
+	}
+
+	// create notification
+	if err := service.CreateFollowNotification(f); err != nil {
+		logger.Error(err)
 	}
 
 	c.JSON(http.StatusCreated, f)

@@ -1,11 +1,11 @@
 package v1
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 
 	"github.com/dogenzaka/gin-tools/validation/validator"
 	"github.com/gin-gonic/gin"
@@ -13,6 +13,7 @@ import (
 	"github.com/techcampman/twitter-d-server/entity"
 	"github.com/techcampman/twitter-d-server/errors"
 	"github.com/techcampman/twitter-d-server/jsonschema"
+	"github.com/techcampman/twitter-d-server/logger"
 	"github.com/techcampman/twitter-d-server/service"
 	"github.com/techcampman/twitter-d-server/utils"
 	"gopkg.in/mgo.v2/bson"
@@ -51,6 +52,13 @@ func createTweet(c *gin.Context) {
 	if err != nil {
 		errors.Send(c, errors.BadParams("body", fmt.Sprint(b)))
 		return
+	}
+
+	if t.InReplyToTweetID.Valid() {
+		// create notification
+		if err := service.CreateReplyNotification(t); err != nil {
+			logger.Error(err)
+		}
 	}
 
 	c.JSON(http.StatusOK, t)
@@ -126,6 +134,11 @@ func doLike(c *gin.Context) {
 	if err := service.CreateLike(l); err != nil {
 		errors.Send(c, err)
 		return
+	}
+
+	// create notification
+	if err := service.CreateLikeNotification(l); err != nil {
+		logger.Error(err)
 	}
 
 	c.JSON(http.StatusCreated, l)

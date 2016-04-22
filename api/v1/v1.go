@@ -73,5 +73,10 @@ func AddV1Endpoints(r *gin.Engine) {
 			images.Use(middleware.CheckSession())
 			images.POST("", uploadImage)
 		}
+		notifications := v1.Group("/notifications")
+		{
+			notifications.Use(middleware.SetLoginUserIDIfNotEmpty())
+			notifications.GET("", getNotifications)
+		}
 	}
 }
