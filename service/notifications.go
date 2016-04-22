@@ -197,7 +197,7 @@ func ReadNotificationsCount(userID bson.ObjectId) (n int, err error) {
 	return
 }
 
-func sendNotificationForUser(u *entity.User, n *entity.PushNotification) (err error) {
+func sendNotificationForUser(u *entity.User, pm *entity.PushMessage) (err error) {
 
 	ss, err := ReadSessionsByUser(u)
 
@@ -231,7 +231,7 @@ LOOP:
 		case <-finChan:
 			break LOOP
 		case i := <-installationsChan:
-			env.GetPushMessage().Send(n.Text, i.ClientType, i.ArnEndpoint)
+			env.GetPushMessage().Send("message!", i.ClientType, i.ArnEndpoint)
 		}
 	}
 
