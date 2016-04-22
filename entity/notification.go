@@ -3,6 +3,9 @@ package entity
 import (
 	"time"
 
+	"github.com/techcampman/twitter-d-server/db/collection"
+	"github.com/techcampman/twitter-d-server/env"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -72,3 +75,19 @@ type (
 		Like   *LikeNotificationDetail   `json:"like,omitempty"`
 	}
 )
+
+func initNotificationsCollection() {
+	likes, err := collection.Notifications()
+	env.AssertErrForInit(err)
+
+	defer likes.Close()
+
+	err = likes.EnsureIndex(mgo.Index{
+		Key:        []string{"userId", "-createdAt"},
+		Unique:     false,
+		DropDups:   false,
+		Background: true,
+		Sparse:     true,
+	})
+	env.AssertErrForInit(err)
+}

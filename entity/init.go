@@ -7,4 +7,5 @@ func init() {
 	initTweetsCollection()
 	initFollowsCollection()
 	initLikesCollection()
+	initNotificationsCollection()
 }
