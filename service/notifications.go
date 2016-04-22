@@ -21,7 +21,21 @@ func CreateFollowNotification(f *entity.Follow) (err error) {
 	n := &entity.Notification{
 		Follow: &entity.FollowNotification{UserID: f.UserID},
 	}
-	createNotification(f.TargetID, n)
+	recvUserID := f.TargetID
+	createNotification(recvUserID, n)
+
+	// Send a follow notification.
+	u, err := ReadUserByID(recvUserID)
+	if err != nil {
+		return
+	}
+	pm := &entity.PushMessage{
+		ID:   n.ID,
+		Type: constant.NotificationTypeFollow,
+		Text: fmt.Sprintf("@%sさんがフォローしました", u.ScreenName),
+	}
+	sendNotificationForUser(u, pm)
+
 	return
 }
 
@@ -36,7 +50,21 @@ func CreateReplyNotification(t *entity.Tweet) (err error) {
 	n := &entity.Notification{
 		Reply: &entity.ReplyNotification{TweetID: t.ID},
 	}
-	createNotification(t0.UserID, n)
+	recvUserID := t0.UserID
+	createNotification(recvUserID, n)
+
+	// Send a reply notification.
+	u, err := ReadUserByID(recvUserID)
+	if err != nil {
+		return
+	}
+	pm := &entity.PushMessage{
+		ID:   n.ID,
+		Type: constant.NotificationTypeReply,
+		Text: fmt.Sprintf("@%sさんが@ツイートしました\n%s", u.ScreenName, t.Text),
+	}
+	sendNotificationForUser(u, pm)
+
 	return
 }
 
@@ -51,7 +79,21 @@ func CreateLikeNotification(l *entity.Like) (err error) {
 	n := &entity.Notification{
 		Like: &entity.LikeNotification{UserID: l.UserID, TweetID: t0.ID},
 	}
-	createNotification(t0.UserID, n)
+	recvUserID := t0.UserID
+	createNotification(recvUserID, n)
+
+	// Send a like notification.
+	u, err := ReadUserByID(recvUserID)
+	if err != nil {
+		return
+	}
+	pm := &entity.PushMessage{
+		ID:   n.ID,
+		Type: constant.NotificationTypeLike,
+		Text: fmt.Sprintf("@%sさんがいいねしました", u.ScreenName),
+	}
+	sendNotificationForUser(u, pm)
+
 	return
 }
 
@@ -199,6 +241,11 @@ func ReadNotificationsCount(userID bson.ObjectId) (n int, err error) {
 
 func sendNotificationForUser(u *entity.User, pm *entity.PushMessage) (err error) {
 
+	pm.Count, err = ReadNotificationsCount(u.ID)
+	if err != nil {
+		return
+	}
+
 	ss, err := ReadSessionsByUser(u)
 
 	var wg sync.WaitGroup
@@ -231,7 +278,7 @@ LOOP:
 		case <-finChan:
 			break LOOP
 		case i := <-installationsChan:
-			env.GetPushMessage().Send(pm.Text, pm.Count, i.ClientType, i.ArnEndpoint)
+			env.GetPushMessage().Send(pm.Text, pm.Count, pm.Type, pm.ID, i.ClientType, i.ArnEndpoint)
 		}
 	}
 
