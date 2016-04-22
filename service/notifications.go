@@ -231,7 +231,7 @@ LOOP:
 		case <-finChan:
 			break LOOP
 		case i := <-installationsChan:
-			env.GetPushMessage().Send("message!", i.ClientType, i.ArnEndpoint)
+			env.GetPushMessage().Send(pm.Text, pm.Count, i.ClientType, i.ArnEndpoint)
 		}
 	}
 
