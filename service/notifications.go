@@ -32,7 +32,7 @@ func CreateFollowNotification(f *entity.Follow) (err error) {
 	pm := &entity.PushMessage{
 		ID:   n.ID,
 		Type: constant.NotificationTypeFollow,
-		Text: fmt.Sprintf("@%sさんがフォローしました", u.ScreenName),
+		Text: fmt.Sprintf("@%sさんがあなたをフォローしました", u.ScreenName),
 	}
 	sendNotificationForUser(u, pm)
 
@@ -90,7 +90,7 @@ func CreateLikeNotification(l *entity.Like) (err error) {
 	pm := &entity.PushMessage{
 		ID:   n.ID,
 		Type: constant.NotificationTypeLike,
-		Text: fmt.Sprintf("@%sさんがいいねしました", u.ScreenName),
+		Text: fmt.Sprintf("@%sさんがいいねしました\n%s", u.ScreenName, t0.Text),
 	}
 	sendNotificationForUser(u, pm)
 
