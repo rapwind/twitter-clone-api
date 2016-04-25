@@ -109,6 +109,10 @@ func getTweets(c *gin.Context) {
 		return
 	}
 
+	if ts == nil {
+		ts = []*entity.TweetDetail{}
+	}
+
 	c.JSON(http.StatusOK, ts)
 }
 

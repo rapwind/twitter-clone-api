@@ -164,6 +164,10 @@ func getUserTweets(c *gin.Context) {
 		return
 	}
 
+	if ts == nil {
+		ts = []*entity.TweetDetail{}
+	}
+
 	c.JSON(http.StatusOK, ts)
 }
 
@@ -178,6 +182,10 @@ func getUserLikedTweets(c *gin.Context) {
 	if err != nil {
 		errors.Send(c, err)
 		return
+	}
+
+	if ts == nil {
+		ts = []*entity.TweetDetail{}
 	}
 
 	c.JSON(http.StatusOK, ts)
