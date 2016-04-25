@@ -252,7 +252,13 @@ func readTweetDetailByTweet(t entity.Tweet, loginUserID bson.ObjectId) (td *enti
 	if t.InReplyToTweetID.Valid() {
 		inReplyToTweet, err = readTweetDetailWithoutReplyByID(t.InReplyToTweetID, loginUserID)
 		if err != nil {
-			return
+			if err == mgo.ErrNotFound { // The tweet corresponding to "t.InReplyToTweetID" is not found if the tweet has been removed.
+				logger.Debug(t.InReplyToTweetID, " is not found.")
+				err = nil
+				inReplyToTweet = nil
+			} else {
+				return
+			}
 		}
 	}
 
@@ -351,7 +357,7 @@ func ReadTweetByID(id bson.ObjectId) (t *entity.Tweet, err error) {
 	defer tweets.Close()
 
 	t = new(entity.Tweet)
-	err = tweets.Find(bson.M{"_id": id}).One(t)
+	err = tweets.Find(bson.M{"_id": id, "deletedAt": bson.M{"$exists": false}}).One(t)
 	return
 }
 
