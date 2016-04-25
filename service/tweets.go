@@ -81,14 +81,18 @@ func ReadUserLikedTweetDetails(userID bson.ObjectId, loginUserID bson.ObjectId, 
 	for iter.Next(&l) {
 		t, err = ReadTweetByID(l.TweetID)
 		if err != nil {
-			return
+			if err == mgo.ErrNotFound { // The tweet corresponding to "l.TweetID" is not found if the tweet is removed.
+				logger.Debug(l.TweetID, " is not found.")
+				err = nil
+				continue
+			} else {
+				return
+			}
 		}
 
-		if t.DeletedAt == nil { // removed tweets are not appended
-			ts = append(ts, *t)
-			if limit > 0 && len(ts) == limit {
-				break
-			}
+		ts = append(ts, *t)
+		if limit > 0 && len(ts) == limit {
+			break
 		}
 	}
 
