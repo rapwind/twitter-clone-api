@@ -191,7 +191,7 @@ func ReadFollowingByID(id bson.ObjectId, offset int, limit int) (flws []entity.F
 	}
 	defer follows.Close()
 
-	q := follows.Find(bson.M{"userId": id}).Sort("-createdAt")
+	q := follows.Find(bson.M{"userId": id}).Sort("-_id")
 
 	if offset > 0 {
 		q = q.Skip(offset)
@@ -214,7 +214,7 @@ func ReadFollowerByID(id bson.ObjectId, offset int, limit int) (flws []entity.Fo
 	}
 	defer follows.Close()
 
-	q := follows.Find(bson.M{"targetId": id}).Sort("-createdAt")
+	q := follows.Find(bson.M{"targetId": id}).Sort("-_id")
 
 	if offset > 0 {
 		q = q.Skip(offset)

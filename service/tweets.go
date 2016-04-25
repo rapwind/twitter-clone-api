@@ -72,7 +72,7 @@ func ReadUserLikedTweetDetails(userID bson.ObjectId, loginUserID bson.ObjectId, 
 	}
 	defer likes.Close()
 
-	iter := likes.Find(m).Sort("-createdAt").Iter()
+	iter := likes.Find(m).Sort("-_id").Iter()
 
 	ts := []entity.Tweet{}
 
@@ -189,7 +189,7 @@ func readSortedTweetDetails(m bson.M, limit int, loginUserID bson.ObjectId) (tds
 	defer tweets.Close()
 
 	ts := []entity.Tweet{}
-	err = tweets.Find(m).Sort("-createdAt").Limit(limit).All(&ts)
+	err = tweets.Find(m).Sort("-_id").Limit(limit).All(&ts)
 	if err != nil {
 		return
 	}
