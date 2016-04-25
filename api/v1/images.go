@@ -64,7 +64,7 @@ func uploadImage(c *gin.Context) {
 
 	// Check type
 	typ := c.Request.FormValue("type")
-	if !(typ == "profile" || typ == "tweet" || typ == "header") {
+	if !(typ == constant.ImageTypeProfile || typ == constant.ImageTypeTweet || typ == constant.ImageTypeHeader) {
 		errors.Send(c, errors.BadParams("type", "invalid image type"))
 		return
 	}
