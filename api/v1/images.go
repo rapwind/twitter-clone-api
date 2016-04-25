@@ -62,7 +62,13 @@ func uploadImage(c *gin.Context) {
 		return
 	}
 
-	bp := basePath(c)
+	// Check type
+	typ := c.Request.FormValue("type")
+	if !(typ == constant.ImageTypeProfile || typ == constant.ImageTypeTweet || typ == constant.ImageTypeHeader) {
+		errors.Send(c, errors.BadParams("type", "invalid image type"))
+		return
+	}
+	bp := basePath(c, typ)
 
 	// Upload to S3
 	p, err := service.UploadImage(bp, iBuf.Bytes(), ct)
@@ -78,9 +84,9 @@ func uploadImage(c *gin.Context) {
 	c.JSON(http.StatusCreated, resp)
 }
 
-func basePath(c *gin.Context) string {
+func basePath(c *gin.Context, typ string) string {
 	hash := randomHash()
-	return "images/" + hash + time.Now().Format("20060102150405")
+	return "images/" + typ + "/" + hash + time.Now().Format("20060102150405")
 }
 
 func randomHash() string {
