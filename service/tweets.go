@@ -147,12 +147,17 @@ func ReadTweetDetails(limit int, maxID bson.ObjectId, sinceID bson.ObjectId, use
 			return
 		}
 
-		// Convert an array of Follow(s) into an array of user IDs
-		if len(flws) != 0 {
-			ids := make([]bson.ObjectId, len(flws))
+		if len(flws) == 0 {
+			// The login user follows no users.
+			m = append(m, bson.M{"userId": userID})
+		} else {
+			// Convert an array of Follow(s) into an array of user IDs
+			n := len(flws)
+			ids := make([]bson.ObjectId, n+1)
 			for i, v := range flws {
 				ids[i] = v.TargetID
 			}
+			ids[n] = userID
 			m = append(m, bson.M{"userId": bson.M{"$in": ids}})
 		}
 	}
