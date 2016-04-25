@@ -53,6 +53,20 @@ func RemoveTweet(t *entity.Tweet) (err error) {
 	return
 }
 
+// ReadLatestTweet returns the newest tweet of a user.
+func ReadLatestTweet(userID bson.ObjectId) (t *entity.Tweet, err error) {
+	tweets, err := collection.Tweets()
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	defer tweets.Close()
+
+	t = &entity.Tweet{}
+	err = tweets.Find(bson.M{"userId": userID, "deletedAt": bson.M{"$exists": false}}).Sort("-_id").One(t)
+	return
+}
+
 // ReadUserLikedTweetDetails returns TweetDetails by user ID
 func ReadUserLikedTweetDetails(userID bson.ObjectId, loginUserID bson.ObjectId, limit int, maxID bson.ObjectId) (tds []*entity.TweetDetail, err error) {
 	if limit == 0 {
