@@ -81,14 +81,18 @@ func ReadUserLikedTweetDetails(userID bson.ObjectId, loginUserID bson.ObjectId, 
 	for iter.Next(&l) {
 		t, err = ReadTweetByID(l.TweetID)
 		if err != nil {
-			return
+			if err == mgo.ErrNotFound { // The tweet corresponding to "l.TweetID" is not found if the tweet is removed.
+				logger.Debug(l.TweetID, " is not found.")
+				err = nil
+				continue
+			} else {
+				return
+			}
 		}
 
-		if t.DeletedAt == nil { // removed tweets are not appended
-			ts = append(ts, *t)
-			if limit > 0 && len(ts) == limit {
-				break
-			}
+		ts = append(ts, *t)
+		if limit > 0 && len(ts) == limit {
+			break
 		}
 	}
 
@@ -252,7 +256,13 @@ func readTweetDetailByTweet(t entity.Tweet, loginUserID bson.ObjectId) (td *enti
 	if t.InReplyToTweetID.Valid() {
 		inReplyToTweet, err = readTweetDetailWithoutReplyByID(t.InReplyToTweetID, loginUserID)
 		if err != nil {
-			return
+			if err == mgo.ErrNotFound { // The tweet corresponding to "t.InReplyToTweetID" is not found if the tweet has been removed.
+				logger.Debug(t.InReplyToTweetID, " is not found.")
+				err = nil
+				inReplyToTweet = nil
+			} else {
+				return
+			}
 		}
 	}
 
@@ -351,7 +361,7 @@ func ReadTweetByID(id bson.ObjectId) (t *entity.Tweet, err error) {
 	defer tweets.Close()
 
 	t = new(entity.Tweet)
-	err = tweets.Find(bson.M{"_id": id}).One(t)
+	err = tweets.Find(bson.M{"_id": id, "deletedAt": bson.M{"$exists": false}}).One(t)
 	return
 }
 
