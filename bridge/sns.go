@@ -8,12 +8,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/techcampman/twitter-d-server/constant"
 	"github.com/techcampman/twitter-d-server/logger"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type (
 	// PushMessage interface for any message sender
 	PushMessage interface {
-		Send(message string, deviceType string, targetArn string) error
+		Send(message string, count int, notifType string, notifID bson.ObjectId, deviceType string, targetArn string) error
 	}
 
 	// MessageBySNS ... AWS SNS session structure
@@ -27,13 +28,17 @@ type (
 	}
 
 	push struct {
-		Alert *string     `json:"alert"`
-		Sound *string     `json:"sound,omitempty"`
-		Data  interface{} `json:"custom_data,omitempty"`
+		Alert            *string     `json:"alert"`
+		Badge            int         `json:"badge,omitempty"`
+		Sound            *string     `json:"sound,omitempty"`
+		ContentAvailable int         `json:"contentAvailable,omitempty"`
+		Data             interface{} `json:"custom_data,omitempty"`
 	}
 
 	iosPush struct {
-		APS push `json:"aps"`
+		APS  push          `json:"aps"`
+		Type string        `json:"type"`
+		ID   bson.ObjectId `json:"id"`
 	}
 )
 
@@ -45,7 +50,7 @@ func NewPushMessageBySNS(c *aws.Config) *MessageBySNS {
 }
 
 // Send ... send notification message
-func (s *MessageBySNS) Send(message string, deviceType string, targetArn string) (err error) {
+func (s *MessageBySNS) Send(message string, count int, notifType string, notifID bson.ObjectId, deviceType string, targetArn string) (err error) {
 	if targetArn == "" {
 		return
 	}
@@ -53,18 +58,22 @@ func (s *MessageBySNS) Send(message string, deviceType string, targetArn string)
 		return
 	}
 	if deviceType != constant.DeviceTypeiOS {
-		err = s.sendPushNotification(message, targetArn)
+		err = s.sendPushNotification(message, count, notifType, notifID, targetArn)
 	}
 
 	return
 }
 
-func (s *MessageBySNS) sendPushNotification(message string, targetArn string) (err error) {
+func (s *MessageBySNS) sendPushNotification(alert string, badge int, notifType string, notifID bson.ObjectId, targetArn string) (err error) {
 	data := new(push)
-	data.Alert = &message
+	data.Alert = &alert
+	data.Badge = badge
+	data.ContentAvailable = 1
 	msg := iOSWrapper{}
 	ios := iosPush{
-		APS: *data,
+		APS:  *data,
+		Type: notifType,
+		ID:   notifID,
 	}
 	b, err := json.Marshal(ios)
 	if err != nil {
