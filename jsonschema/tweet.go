@@ -22,7 +22,6 @@ var (
 			"inRetweetToTweetId": inRetweetToTweetID,
 		},
 		"additionalProperties": false,
-		"required":             []interface{}{"text"},
 	}
 )
 

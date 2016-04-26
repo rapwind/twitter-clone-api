@@ -73,6 +73,11 @@ func createTweet(c *gin.Context) {
 			errors.Send(c, errors.DataConflict())
 			return
 		}
+	} else { // if it is not a retweet:
+		if t.Text == "" { // Reject an empty tweet.
+			errors.Send(c, errors.BadParams("text", ""))
+			return
+		}
 	}
 
 	// create tweet
