@@ -30,7 +30,7 @@ type (
 	push struct {
 		Alert            *string     `json:"alert"`
 		Badge            int         `json:"badge,omitempty"`
-		Sound            *string     `json:"sound,omitempty"`
+		Sound            string      `json:"sound,omitempty"`
 		ContentAvailable int         `json:"contentAvailable,omitempty"`
 		Data             interface{} `json:"custom_data,omitempty"`
 	}
@@ -57,7 +57,7 @@ func (s *MessageBySNS) Send(message string, count int, notifType string, notifID
 	if message == "" {
 		return
 	}
-	if deviceType != constant.DeviceTypeiOS {
+	if deviceType == constant.DeviceTypeiOS {
 		err = s.sendPushNotification(message, count, notifType, notifID, targetArn)
 	}
 
@@ -69,6 +69,7 @@ func (s *MessageBySNS) sendPushNotification(alert string, badge int, notifType s
 	data.Alert = &alert
 	data.Badge = badge
 	data.ContentAvailable = 1
+	data.Sound = "default"
 	msg := iOSWrapper{}
 	ios := iosPush{
 		APS:  *data,

@@ -54,14 +54,14 @@ func ReadSessionByUUID(uuid string) (s *entity.Session, err error) {
 }
 
 // ReadSessionsByUser gets "entity.Session" list
-func ReadSessionsByUser(user *entity.User) (ss []entity.Session, err error) {
+func ReadSessionsByUser(user *entity.User) (ss []*entity.Session, err error) {
 	sessions, err := collection.Sessions()
 	if err != nil {
 		return
 	}
 	defer sessions.Close()
 
-	err = sessions.Find(bson.M{"userId": user.ID}).All(ss)
+	err = sessions.Find(bson.M{"userId": user.ID}).All(&ss)
 	return
 }
 

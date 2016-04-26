@@ -271,7 +271,7 @@ func sendNotificationForUser(u *entity.User, pm *entity.PushMessage) (err error)
 	}()
 
 	for _, s := range ss {
-		go func(s entity.Session) {
+		go func(s *entity.Session) {
 			defer wg.Done()
 
 			i, err := ReadInstallationByID(s.InstallationID)
@@ -293,8 +293,6 @@ LOOP:
 			env.GetPushMessage().Send(pm.Text, pm.Count, pm.Type, pm.ID, i.ClientType, i.ArnEndpoint)
 		}
 	}
-
-	fmt.Println(ss)
 
 	return
 }
