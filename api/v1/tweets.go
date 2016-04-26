@@ -48,15 +48,41 @@ func createTweet(c *gin.Context) {
 
 	// Check duplicated tweets
 	t0, err := service.ReadLatestTweet(uid)
-	if t0.Text == t.Text {
+	if t0 != nil && t0.Text == t.Text {
 		errors.Send(c, errors.DataConflict())
 		return
 	}
 
-	// Check the existence of the tweet corresponding to t.InReplyTweetID.
+	// Check the existence of the tweet corresponding to t.InReplyToTweetID.
 	if t.InReplyToTweetID.Valid() {
 		if _, err := service.ReadTweetByID(t.InReplyToTweetID); err != nil {
 			errors.Send(c, errors.ErrDataNotFound)
+			return
+		}
+	}
+
+	if t.InRetweetToTweetID.Valid() {
+		// Check the existence of the tweet corresponding to t.InRetweetToTweetID.
+		if _, err := service.ReadTweetByID(t.InRetweetToTweetID); err != nil {
+			errors.Send(c, errors.ErrDataNotFound)
+			return
+		}
+
+		// Check duplicated retweets.
+		if service.CheckDupRetweet(uid, t.InRetweetToTweetID) {
+			errors.Send(c, errors.DataConflict())
+			return
+		}
+
+		// Check retweeting my tweet
+		t1, _ := service.ReadTweetByID(t.InRetweetToTweetID)
+		if t1 != nil && t1.UserID == uid {
+			errors.Send(c, errors.DataConflict())
+			return
+		}
+	} else { // if it is not a retweet:
+		if t.Text == "" { // Reject an empty tweet.
+			errors.Send(c, errors.BadParams("text", ""))
 			return
 		}
 	}

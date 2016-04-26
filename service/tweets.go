@@ -266,21 +266,32 @@ func readTweetDetailByTweet(t entity.Tweet, loginUserID bson.ObjectId) (td *enti
 		return
 	}
 
-	inReplyToTweet := (*entity.TweetDetailWithoutReply)(nil)
-	if t.InReplyToTweetID.Valid() {
-		inReplyToTweet, err = readTweetDetailWithoutReplyByID(t.InReplyToTweetID, loginUserID)
+	inReplyToTweet, err := readAliveTweetDetailWithoutReplyByID(t.InReplyToTweetID, loginUserID)
+	if err != nil {
+		return
+	}
+
+	inRetweetToTweet, err := readAliveTweetDetailWithoutReplyByID(t.InRetweetToTweetID, loginUserID)
+	if err != nil {
+		return
+	}
+
+	td = &entity.TweetDetail{TweetDetailWithoutReply: tdwr, InReplyToTweet: inReplyToTweet, InRetweetToTweet: inRetweetToTweet}
+	return
+}
+
+// Obtain a tweet that is not deleted.
+func readAliveTweetDetailWithoutReplyByID(tweetID bson.ObjectId, loginUserID bson.ObjectId) (tdwr *entity.TweetDetailWithoutReply, err error) {
+	if tweetID.Valid() {
+		tdwr, err = readTweetDetailWithoutReplyByID(tweetID, loginUserID)
 		if err != nil {
-			if err == mgo.ErrNotFound { // The tweet corresponding to "t.InReplyToTweetID" is not found if the tweet has been removed.
-				logger.Debug(t.InReplyToTweetID, " is not found.")
+			if err == mgo.ErrNotFound { // The tweet corresponding to "tweetID" is not found if the tweet has been removed.
+				logger.Debug(tdwr, " is not found.")
 				err = nil
-				inReplyToTweet = nil
-			} else {
-				return
+				tdwr = nil
 			}
 		}
 	}
-
-	td = &entity.TweetDetail{TweetDetailWithoutReply: tdwr, InReplyToTweet: inReplyToTweet}
 	return
 }
 
@@ -296,13 +307,15 @@ func readTweetDetailWithoutReplyByID(tweetID bson.ObjectId, loginUserID bson.Obj
 
 func readTweetDetailWithoutReplyByTweet(t entity.Tweet, loginUserID bson.ObjectId) (tdwr *entity.TweetDetailWithoutReply, err error) {
 	var wg sync.WaitGroup
-	wg.Add(3)
+	wg.Add(5)
 
 	finChan := make(chan bool)
 	errChan := make(chan error)
 	userDetailChan := make(chan *entity.UserDetail)
 	likedChan := make(chan *bool)
 	likedCountChan := make(chan int)
+	retweetedChan := make(chan *bool)
+	retweetedCountChan := make(chan int)
 
 	tdwr = &entity.TweetDetailWithoutReply{Tweet: &t}
 
@@ -341,6 +354,25 @@ func readTweetDetailWithoutReplyByTweet(t entity.Tweet, loginUserID bson.ObjectI
 		likedChan <- &liked
 	}(loginUserID, t.ID)
 
+	go func(loginUserID bson.ObjectId, tweetID bson.ObjectId) {
+		defer wg.Done()
+
+		tweets, err := collection.Tweets()
+		if err != nil {
+			errChan <- err
+			return
+		}
+		defer tweets.Close()
+		t := entity.Tweet{}
+		var retweeted bool
+		if loginUserID.Valid() && tweets.Find(bson.M{"inRetweetToTweetId": tweetID, "userId": loginUserID, "deletedAt": bson.M{"$exists": false}}).One(&t) == nil {
+			retweeted = true
+		} else {
+			retweeted = false
+		}
+		retweetedChan <- &retweeted
+	}(loginUserID, t.ID)
+
 	go func(id bson.ObjectId) {
 		defer wg.Done()
 		c, err := ReadLikedCountByTweetID(id)
@@ -349,6 +381,16 @@ func readTweetDetailWithoutReplyByTweet(t entity.Tweet, loginUserID bson.ObjectI
 			return
 		}
 		likedCountChan <- c
+	}(t.ID)
+
+	go func(id bson.ObjectId) {
+		defer wg.Done()
+		c, err := ReadRetweetedCountByTweetID(id)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		retweetedCountChan <- c
 	}(t.ID)
 
 LOOP:
@@ -361,9 +403,24 @@ LOOP:
 		case tdwr.User = <-userDetailChan:
 		case tdwr.Liked = <-likedChan:
 		case tdwr.LikedCount = <-likedCountChan:
+		case tdwr.Retweeted = <-retweetedChan:
+		case tdwr.RetweetedCount = <-retweetedCountChan:
 		}
 	}
 	return
+}
+
+// CheckDupRetweet returns true if a given user has retweet(s) to a given tweet.
+func CheckDupRetweet(userID bson.ObjectId, tweetID bson.ObjectId) bool {
+	tweets, err := collection.Tweets()
+	if err != nil {
+		logger.Error(err)
+		return true
+	}
+	defer tweets.Close()
+
+	n, err := tweets.Find(bson.M{"inRetweetToTweetId": tweetID, "userId": userID, "deletedAt": bson.M{"$exists": false}}).Count()
+	return n > 0
 }
 
 // ReadTweetByID returns entity.Tweet by tweet ID
@@ -376,6 +433,19 @@ func ReadTweetByID(id bson.ObjectId) (t *entity.Tweet, err error) {
 
 	t = new(entity.Tweet)
 	err = tweets.Find(bson.M{"_id": id, "deletedAt": bson.M{"$exists": false}}).One(t)
+	return
+}
+
+// ReadRetweetedCountByTweetID gets entity.TweetDetail.RetweetedCount by TweetID
+func ReadRetweetedCountByTweetID(id bson.ObjectId) (retweetedCount int, err error) {
+	tweets, err := collection.Tweets()
+	if err != nil {
+		return
+	}
+	defer tweets.Close()
+
+	retweetedCount, err = tweets.Find(bson.M{"inRetweetToTweetId": id, "deletedAt": bson.M{"$exists": false}}).Count()
+
 	return
 }
 
