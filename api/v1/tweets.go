@@ -46,6 +46,13 @@ func createTweet(c *gin.Context) {
 		return
 	}
 
+	// Check duplicated tweets
+	t0, err := service.ReadLatestTweet(uid)
+	if t0.Text == t.Text {
+		errors.Send(c, errors.DataConflict())
+		return
+	}
+
 	// create tweet
 	t.UserID = uid
 	err = service.CreateTweet(t)
