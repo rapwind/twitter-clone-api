@@ -64,4 +64,9 @@ var (
 		"type":   "string",
 		"format": "uri",
 	}
+
+	inReplyToTweetID = map[string]interface{}{
+		"type":    "string",
+		"pattern": "[0-9a-fA-F]{24}",
+	}
 )

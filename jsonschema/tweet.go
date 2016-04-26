@@ -16,8 +16,9 @@ var (
 	v1PostTweetSchema = map[string]interface{}{
 		"type": "object",
 		"properties": map[string]interface{}{
-			"text":       text,
-			"contentUrl": contentURL,
+			"text":             text,
+			"contentUrl":       contentURL,
+			"inReplyToTweetId": inReplyToTweetID,
 		},
 		"additionalProperties": false,
 		"required":             []interface{}{"text"},

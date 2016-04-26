@@ -53,6 +53,14 @@ func createTweet(c *gin.Context) {
 		return
 	}
 
+	// Check the existence of the tweet corresponding to t.InReplyTweetID.
+	if t.InReplyToTweetID.Valid() {
+		if _, err := service.ReadTweetByID(t.InReplyToTweetID); err != nil {
+			errors.Send(c, errors.ErrDataNotFound)
+			return
+		}
+	}
+
 	// create tweet
 	t.UserID = uid
 	err = service.CreateTweet(t)
