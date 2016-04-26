@@ -63,7 +63,7 @@ func createTweet(c *gin.Context) {
 
 	if t.InReplyToTweetID.Valid() {
 		// create notification
-		if err := service.CreateReplyNotification(t); err != nil {
+		if err := service.CreateReplyNotification(uid, t); err != nil {
 			logger.Error(err)
 		}
 	}
@@ -148,7 +148,7 @@ func doLike(c *gin.Context) {
 	}
 
 	// create notification
-	if err := service.CreateLikeNotification(l); err != nil {
+	if err := service.CreateLikeNotification(loginUserID, l); err != nil {
 		logger.Error(err)
 	}
 
