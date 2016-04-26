@@ -40,7 +40,7 @@ func CreateFollowNotification(f *entity.Follow) (err error) {
 }
 
 // CreateReplyNotification creates a reply notification.
-func CreateReplyNotification(t *entity.Tweet) (err error) {
+func CreateReplyNotification(loginUserID bson.ObjectId, t *entity.Tweet) (err error) {
 	t0, err := ReadTweetByID(t.InReplyToTweetID)
 	if err != nil {
 		return
@@ -51,6 +51,12 @@ func CreateReplyNotification(t *entity.Tweet) (err error) {
 		Reply: &entity.ReplyNotification{TweetID: t.ID},
 	}
 	recvUserID := t0.UserID
+
+	// Reject a narcissist notification
+	if recvUserID == loginUserID {
+		return
+	}
+
 	createNotification(recvUserID, n)
 
 	// Send a reply notification.
@@ -69,7 +75,7 @@ func CreateReplyNotification(t *entity.Tweet) (err error) {
 }
 
 // CreateLikeNotification creates a reply notification.
-func CreateLikeNotification(l *entity.Like) (err error) {
+func CreateLikeNotification(loginUserID bson.ObjectId, l *entity.Like) (err error) {
 	t0, err := ReadTweetByID(l.TweetID)
 	if err != nil {
 		return
@@ -80,6 +86,12 @@ func CreateLikeNotification(l *entity.Like) (err error) {
 		Like: &entity.LikeNotification{UserID: l.UserID, TweetID: t0.ID},
 	}
 	recvUserID := t0.UserID
+
+	// Reject a narcissist notification
+	if recvUserID == loginUserID {
+		return
+	}
+
 	createNotification(recvUserID, n)
 
 	// Send a like notification.
