@@ -95,6 +95,13 @@ func createTweet(c *gin.Context) {
 		}
 	}
 
+	if t.InRetweetToTweetID.Valid() {
+		// create notification
+		if err := service.CreateRetweetNotification(uid, t); err != nil {
+			logger.Error(err)
+		}
+	}
+
 	c.JSON(http.StatusOK, t)
 }
 
