@@ -48,7 +48,7 @@ func createTweet(c *gin.Context) {
 
 	// Check duplicated tweets
 	t0, err := service.ReadLatestTweet(uid)
-	if t0.Text == t.Text {
+	if t0 != nil && t0.Text == t.Text {
 		errors.Send(c, errors.DataConflict())
 		return
 	}
@@ -70,6 +70,13 @@ func createTweet(c *gin.Context) {
 
 		// Check duplicated retweets.
 		if service.CheckDupRetweet(uid, t.InRetweetToTweetID) {
+			errors.Send(c, errors.DataConflict())
+			return
+		}
+
+		// Check retweeting my tweet
+		t1, _ := service.ReadTweetByID(t.InRetweetToTweetID)
+		if t1 != nil && t1.UserID == uid {
 			errors.Send(c, errors.DataConflict())
 			return
 		}
