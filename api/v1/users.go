@@ -71,6 +71,19 @@ func getUser(c *gin.Context) {
 	c.JSON(http.StatusOK, ud)
 }
 
+func getUsers(c *gin.Context) {
+	l, _ := utils.GetLoginUserID(c)
+	screenName := c.Request.FormValue("screenName")
+
+	ud, err := service.ReadUserDetailByScreenName(screenName, l)
+	if err != nil {
+		errors.Send(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, ud)
+}
+
 func doFollow(c *gin.Context) {
 	l, u := getLoginUserIDAndTargetUser(c)
 

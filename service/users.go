@@ -43,6 +43,22 @@ func CreateUser(u *entity.User) (err error) {
 	return
 }
 
+// ReadUserDetailByScreenName returns UserDetail by user ID
+func ReadUserDetailByScreenName(screenName string, l bson.ObjectId) (ud *entity.UserDetail, err error) {
+	users, err := collection.Users()
+	if err != nil {
+		return
+	}
+	defer users.Close()
+
+	u := new(entity.User)
+	err = users.Find(bson.M{"screenName": screenName}).One(u)
+
+	ud, err = ReadUserDetailByID(u.ID, l)
+
+	return
+}
+
 // ReadUserDetailByID returns UserDetail by user ID
 func ReadUserDetailByID(id bson.ObjectId, l bson.ObjectId) (ud *entity.UserDetail, err error) {
 	var wg sync.WaitGroup

@@ -32,6 +32,7 @@ func AddV1Endpoints(r *gin.Engine) {
 		}
 		users := v1.Group("/users")
 		{
+			users.GET("", getUsers)
 			users.POST("", registerUser)
 
 			users.Use(
