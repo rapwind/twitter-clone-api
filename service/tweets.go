@@ -410,6 +410,19 @@ LOOP:
 	return
 }
 
+// CheckDupRetweet returns true if a given user has retweet(s) to a given tweet.
+func CheckDupRetweet(userID bson.ObjectId, tweetID bson.ObjectId) bool {
+	tweets, err := collection.Tweets()
+	if err != nil {
+		logger.Error(err)
+		return true
+	}
+	defer tweets.Close()
+
+	n, err := tweets.Find(bson.M{"inRetweetToTweetId": tweetID, "userId": userID, "deletedAt": bson.M{"$exists": false}}).Count()
+	return n > 0
+}
+
 // ReadTweetByID returns entity.Tweet by tweet ID
 func ReadTweetByID(id bson.ObjectId) (t *entity.Tweet, err error) {
 	tweets, err := collection.Tweets()

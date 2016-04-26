@@ -69,4 +69,9 @@ var (
 		"type":    "string",
 		"pattern": "[0-9a-fA-F]{24}",
 	}
+
+	inRetweetToTweetID = map[string]interface{}{
+		"type":    "string",
+		"pattern": "[0-9a-fA-F]{24}",
+	}
 )
