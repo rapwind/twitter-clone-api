@@ -58,7 +58,7 @@ func initTweetsCollection() {
 	defer tweets.Close()
 
 	err = tweets.EnsureIndex(mgo.Index{
-		Key:        []string{"-createdAt", "deletedAt"},
+		Key:        []string{"-_id", "deletedAt"},
 		Unique:     false,
 		DropDups:   false,
 		Background: true,

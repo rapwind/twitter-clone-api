@@ -26,7 +26,7 @@ func initFollowsCollection() {
 	defer follows.Close()
 
 	err = follows.EnsureIndex(mgo.Index{
-		Key:        []string{"userId", "-createdAt"},
+		Key:        []string{"userId", "-_id"},
 		Unique:     false,
 		DropDups:   false,
 		Background: true,
@@ -35,7 +35,7 @@ func initFollowsCollection() {
 	env.AssertErrForInit(err)
 
 	err = follows.EnsureIndex(mgo.Index{
-		Key:        []string{"targetId", "-createdAt"},
+		Key:        []string{"targetId", "-_id"},
 		Unique:     false,
 		DropDups:   false,
 		Background: true,

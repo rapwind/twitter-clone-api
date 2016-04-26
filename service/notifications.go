@@ -205,7 +205,7 @@ func readNotifications(userID bson.ObjectId, limit int, maxID bson.ObjectId, sin
 	defer nots.Close()
 
 	ns = []entity.Notification{}
-	err = nots.Find(bson.M{"$and": m}).Sort("-createdAt").Limit(limit).All(&ns)
+	err = nots.Find(bson.M{"$and": m}).Sort("-_id").Limit(limit).All(&ns)
 
 	return
 }
