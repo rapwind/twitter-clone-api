@@ -20,6 +20,7 @@ var (
 		"properties": map[string]interface{}{
 			"clientType":  clientType,
 			"deviceToken": deviceToken,
+			"arnEndpoint": arnEndpoint,
 		},
 		"additionalProperties": false,
 		"required":             []interface{}{"clientType"},
