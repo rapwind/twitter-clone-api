@@ -79,8 +79,17 @@ func initTweetsCollection() {
 	})
 	env.AssertErrForInit(err)
 
-	err = tweets.EnsureIndex(mgo.Index{ // for retweetedCount, retweeted
-		Key:        []string{"inRetweetToTweetId", "userId"},
+	err = tweets.EnsureIndex(mgo.Index{ // for retweetedCount
+		Key:        []string{"inRetweetToTweetId", "deletedAt"},
+		Unique:     false,
+		DropDups:   false,
+		Background: true,
+		Sparse:     true,
+	})
+	env.AssertErrForInit(err)
+
+	err = tweets.EnsureIndex(mgo.Index{ // for retweeted checking
+		Key:        []string{"inRetweetToTweetId", "userId", "deletedAt"},
 		Unique:     false,
 		DropDups:   false,
 		Background: true,

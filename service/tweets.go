@@ -365,7 +365,7 @@ func readTweetDetailWithoutReplyByTweet(t entity.Tweet, loginUserID bson.ObjectI
 		defer tweets.Close()
 		t := entity.Tweet{}
 		var retweeted bool
-		if loginUserID.Valid() && tweets.Find(bson.M{"inRetweetToTweetId": tweetID, "userId": loginUserID}).One(&t) == nil {
+		if loginUserID.Valid() && tweets.Find(bson.M{"inRetweetToTweetId": tweetID, "userId": loginUserID, "deletedAt": bson.M{"$exists": false}}).One(&t) == nil {
 			retweeted = true
 		} else {
 			retweeted = false
@@ -444,7 +444,7 @@ func ReadRetweetedCountByTweetID(id bson.ObjectId) (retweetedCount int, err erro
 	}
 	defer tweets.Close()
 
-	retweetedCount, err = tweets.Find(bson.M{"inRetweetToTweetId": id}).Count()
+	retweetedCount, err = tweets.Find(bson.M{"inRetweetToTweetId": id, "deletedAt": bson.M{"$exists": false}}).Count()
 
 	return
 }
