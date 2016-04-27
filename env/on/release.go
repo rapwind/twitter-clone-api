@@ -47,11 +47,11 @@ func (rel *Release) Init() (err error) {
 	// MongoDB
 	// TODO - Fix Release Config
 	mdb, err := db.NewMongoDB(
-		[]string{"ds023560.mlab.com:23560"},
+		[]string{"ec2-52-201-250-108.compute-1.amazonaws.com:27017"},
 		10*time.Second,
-		"poppo-mongo-dev",
+		"poppo",
 		"",
-		"poppo-administrator",
+		"poppo-release",
 		"OzamasaIsGod",
 		128,
 	)
