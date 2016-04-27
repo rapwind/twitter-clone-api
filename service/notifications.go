@@ -74,6 +74,36 @@ func CreateReplyNotification(loginUserID bson.ObjectId, t *entity.Tweet) (err er
 	return
 }
 
+// CreateRetweetNotification creates a retweet notification.
+func CreateRetweetNotification(loginUserID bson.ObjectId, t *entity.Tweet) (err error) {
+	t0, err := ReadTweetByID(t.InRetweetToTweetID)
+	if err != nil {
+		return
+	}
+
+	// The writer of the original tweet (t0.UserID) receives a retweet notification from the user that retweets (t.UserID).
+	n := &entity.Notification{
+		Retweet: &entity.RetweetNotification{TweetID: t.ID},
+	}
+	recvUserID := t0.UserID
+
+	createNotification(recvUserID, n)
+
+	// Send a retweet notification.
+	u, err := ReadUserByID(recvUserID)
+	if err != nil {
+		return
+	}
+	pm := &entity.PushMessage{
+		ID:   n.ID,
+		Type: constant.NotificationTypeRetweet,
+		Text: fmt.Sprintf("@%sさんがリツイートしました\n%s", u.ScreenName, t.Text),
+	}
+	sendNotificationForUser(u, pm)
+
+	return
+}
+
 // CreateLikeNotification creates a reply notification.
 func CreateLikeNotification(loginUserID bson.ObjectId, l *entity.Like) (err error) {
 	t0, err := ReadTweetByID(l.TweetID)
@@ -139,7 +169,7 @@ func ReadNotificationDetails(userID bson.ObjectId, limit int, maxID bson.ObjectI
 	nds = make([]entity.NotificationDetail, len(ns))
 	var nd *entity.NotificationDetail
 	for i, n := range ns {
-		nd = &entity.NotificationDetail{n.CommonNotification, nil, nil, nil}
+		nd = &entity.NotificationDetail{n.CommonNotification, nil, nil, nil, nil}
 
 		if n.Follow != nil { // This is a follow notification
 			nd.Type = constant.NotificationTypeFollow
@@ -147,6 +177,9 @@ func ReadNotificationDetails(userID bson.ObjectId, limit int, maxID bson.ObjectI
 		} else if n.Reply != nil { // This is a reply notification.
 			nd.Type = constant.NotificationTypeReply
 			nd.Reply, err = readReplyNotificationDetail(*n.Reply, userID)
+		} else if n.Retweet != nil { // This is a retweet notification.
+			nd.Type = constant.NotificationTypeRetweet
+			nd.Retweet, err = readRetweetNotificationDetail(*n.Retweet, userID)
 		} else if n.Like != nil { // This is a like notification.
 			nd.Type = constant.NotificationTypeLike
 			nd.Like, err = readLikeNotificationDetail(*n.Like, userID)
@@ -183,6 +216,15 @@ func readReplyNotificationDetail(n entity.ReplyNotification, loginUserID bson.Ob
 		return
 	}
 	nd = &entity.ReplyNotificationDetail{Tweet: *t}
+	return
+}
+
+func readRetweetNotificationDetail(n entity.RetweetNotification, loginUserID bson.ObjectId) (nd *entity.RetweetNotificationDetail, err error) {
+	t, err := ReadTweetDetailByID(n.TweetID, loginUserID)
+	if err != nil {
+		return
+	}
+	nd = &entity.RetweetNotificationDetail{Tweet: *t}
 	return
 }
 

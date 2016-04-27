@@ -37,6 +37,11 @@ type (
 		TweetID bson.ObjectId `json:"-" bson:"tweetId" validate:"objectId"`
 	}
 
+	// RetweetNotification ... fields only used in retweet notifications (MongoDB)
+	RetweetNotification struct {
+		TweetID bson.ObjectId `json:"-" bson:"tweetId" validate:"objectId"`
+	}
+
 	// LikeNotification ... fields only used in like notifications (MongoDB)
 	LikeNotification struct {
 		UserID  bson.ObjectId `json:"-" bson:"userId"  validate:"objectId"`
@@ -46,9 +51,10 @@ type (
 	// Notification ... structure of a notification (MongoDB)
 	Notification struct {
 		CommonNotification `bson:",inline"`
-		Follow             *FollowNotification `json:"-" bson:"follow,omitempty"`
-		Reply              *ReplyNotification  `json:"-" bson:"reply,omitempty"`
-		Like               *LikeNotification   `json:"-" bson:"like,omitempty"`
+		Follow             *FollowNotification  `json:"-" bson:"follow,omitempty"`
+		Reply              *ReplyNotification   `json:"-" bson:"reply,omitempty"`
+		Retweet            *RetweetNotification `json:"-" bson:"retweet,omitempty"`
+		Like               *LikeNotification    `json:"-" bson:"like,omitempty"`
 	}
 
 	// FollowNotificationDetail ... fields only used in follow notifications (API response)
@@ -61,6 +67,11 @@ type (
 		Tweet TweetDetail `json:"tweet"`
 	}
 
+	// RetweetNotificationDetail ... fields only used in retweet notifications (API Response)
+	RetweetNotificationDetail struct {
+		Tweet TweetDetail `json:"tweet"`
+	}
+
 	// LikeNotificationDetail ... fields only used in like notifications (API response)
 	LikeNotificationDetail struct {
 		User  UserDetail  `json:"user"`
@@ -70,9 +81,10 @@ type (
 	// NotificationDetail ... structure of a notification (API response)
 	NotificationDetail struct {
 		CommonNotification
-		Follow *FollowNotificationDetail `json:"follow,omitempty"`
-		Reply  *ReplyNotificationDetail  `json:"reply,omitempty"`
-		Like   *LikeNotificationDetail   `json:"like,omitempty"`
+		Follow  *FollowNotificationDetail  `json:"follow,omitempty"`
+		Reply   *ReplyNotificationDetail   `json:"reply,omitempty"`
+		Retweet *RetweetNotificationDetail `json:"retweet,omitempty"`
+		Like    *LikeNotificationDetail    `json:"like,omitempty"`
 	}
 )
 

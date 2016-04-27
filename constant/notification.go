@@ -9,4 +9,7 @@ const (
 
 	// NotificationTypeReply for notifications of reply
 	NotificationTypeReply = "reply"
+
+	// NotificationTypeRetweet for notifications of retweet
+	NotificationTypeRetweet = "retweet"
 )
